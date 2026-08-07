@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Republic Wings - POS & Comandas</title>
-  <!-- Tailwind CSS -->
+  <title>Republic Wings - POS Professional & Comandas</title>
+  <!-- Tailwind CSS para el diseño visual -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Iconos Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,7 +13,7 @@
     ::-webkit-scrollbar-track { background: #1f2937; }
     ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
     
-    /* Estilos exclusivos para la impresión del ticket de cocina */
+    /* Reglas de impresión exclusivas para la comanda de cocina */
     @media print {
       body * { visibility: hidden; }
       #ticket-cocina, #ticket-cocina * { visibility: visible; }
@@ -24,18 +24,18 @@
 </head>
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen flex flex-col overflow-hidden">
 
-  <!-- ENCABEZADO / BRANDING -->
+  <!-- ENCABEZADO -->
   <header class="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex justify-between items-center shrink-0">
     <div class="flex items-center gap-3">
       <div class="bg-red-600 text-white font-black px-3 py-1.5 rounded-lg text-lg tracking-wider shadow-lg shadow-red-950">
         REPUBLIC WINGS
       </div>
-      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">POS & Comandas v1.1</span>
+      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">Sistema POS & Salsas v2.0</span>
     </div>
     <div class="text-right">
       <p id="clock" class="text-sm font-mono text-zinc-400">00:00:00</p>
       <p class="text-xs text-emerald-400 flex items-center justify-end gap-1">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Servidor Conectado
       </p>
     </div>
   </header>
@@ -43,10 +43,10 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 flex overflow-hidden">
     
-    <!-- COLUMNA IZQUIERDA: MENÚ -->
+    <!-- COLUMNA IZQUIERDA: MENÚ DE PRODUCTOS -->
     <section class="flex-1 flex flex-col border-r border-zinc-800 bg-zinc-950 overflow-hidden">
       
-      <!-- CATEGORÍAS -->
+      <!-- BARRA DE CATEGORÍAS -->
       <div id="category-bar" class="p-4 bg-zinc-900/50 border-b border-zinc-800 flex gap-2 overflow-x-auto shrink-0">
         <button onclick="filtrarCategoria('TODOS')" class="cat-btn bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
           Todos
@@ -58,7 +58,7 @@
         <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500 gap-3">
             <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p>Cargando menú en Bolivianos (Bs)...</p>
+            <p>Cargando menú oficial de Republic Wings...</p>
           </div>
         </div>
       </div>
@@ -75,12 +75,12 @@
         </button>
       </div>
 
-      <!-- LISTA DE PRODUCTOS -->
+      <!-- LISTADO DE ÍTEMS EN EL CARRITO -->
       <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados</div>
+        <div class="text-center text-zinc-500 py-12 text-sm">No hay productos en la orden</div>
       </div>
 
-      <!-- RESUMEN Y PAGO -->
+      <!-- PANEL DE COBRO Y MÉTODO DE PAGO -->
       <div class="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
         <div class="space-y-1 text-sm">
           <div class="flex justify-between text-zinc-400">
@@ -94,7 +94,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉSTATIC DE PAGO</label>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉTODO DE PAGO</label>
           <div class="grid grid-cols-3 gap-2">
             <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Efectivo</button>
             <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Tarjeta</button>
@@ -103,24 +103,74 @@
         </div>
 
         <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed">
-          REGISTRAR VENTA Y COMANDA
+          ENVIAR A COCINA Y REGISTRAR
         </button>
       </div>
     </section>
   </main>
 
-  <!-- MODAL / VISTA DE COMANDA PARA COCINA (IMPRESIÓN) -->
+  <!-- MODAL 1: SELECCIÓN DETALLADA DE SALSAS -->
+  <div id="modal-salsas" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 border border-zinc-700 text-zinc-100 p-6 rounded-xl max-w-md w-full shadow-2xl">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
+        <div>
+          <h3 id="modal-prod-nombre" class="font-bold text-lg text-white">Configurar Salsas</h3>
+          <p id="modal-prod-sub" class="text-xs text-red-400 font-medium">Selecciona tus opciones</p>
+        </div>
+        <button onclick="cerrarModalSalsas()" class="text-zinc-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- SELECTOR DE SALSA -->
+      <div class="space-y-4 mb-6">
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">ELIGE LA SALSA</label>
+          <select id="select-salsa-nombre" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-red-500">
+            <option value="Miel y Mostaza">Miel y Mostaza</option>
+            <option value="Barbacoa">Barbacoa</option>
+            <option value="Jack Daniel's">Jack Daniel's</option>
+            <option value="Blue Cheese">Blue Cheese</option>
+            <option value="Albahaca y Hierbas">Albahaca y Hierbas</option>
+            <option value="Hot Republic">Hot Republic 🔥</option>
+            <option value="Bufallo Wild">Bufallo Wild 🔥</option>
+            <option value="Extra Hot Republic (Bañado)">Extra Hot Republic (Solo Bañado) 🔥🔥</option>
+            <option value="Ajo Parmesano (Bañado)">Ajo Parmesano (Solo Bañado)</option>
+            <option value="Lemon Pepper (Bañado)">Lemon Pepper (Solo Bañado)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">PRESENTACIÓN DE LA SALSA</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="setModoPresentacion('Bañadas')" id="btn-modo-Bañadas" class="modo-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition">
+              Bañadas
+            </button>
+            <button type="button" onclick="setModoPresentacion('Salsa Aparte')" id="btn-modo-Aparte" class="modo-btn bg-zinc-800 text-zinc-300 py-2 rounded-lg text-xs hover:bg-zinc-700 transition">
+              Salsa Aparte
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="confirmarAgregarConSalsa()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-red-950">
+        Agregar a la Orden
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 2: COMANDA DE COCINA (IMPRESIÓN / VISTA) -->
   <div id="modal-comanda" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white text-zinc-900 p-6 rounded-xl max-w-sm w-full shadow-2xl" id="ticket-cocina">
       <div class="text-center border-b pb-3 mb-3">
         <h2 class="text-2xl font-black tracking-wider">REPUBLIC WINGS</h2>
-        <p class="text-xs font-bold text-zinc-600">*** COMANDA DE COCINA ***</p>
+        <p class="text-xs font-bold text-zinc-600">*** COMANDA PARA COCINA ***</p>
         <p id="ticket-id" class="text-xs font-mono mt-1 text-zinc-500">ID: RW-0000</p>
         <p id="ticket-fecha" class="text-xs text-zinc-500">Fecha: --/--/----</p>
       </div>
 
-      <div class="space-y-2 mb-4 text-sm font-semibold" id="ticket-detalles">
-        <!-- Detalle de productos con instrucción de salsa -->
+      <div class="space-y-3 mb-4 text-sm font-semibold" id="ticket-detalles">
+        <!-- Ítems detallados para los cocineros -->
       </div>
 
       <div class="border-t pt-3 flex justify-between text-base font-black">
@@ -140,12 +190,16 @@
   </div>
 
   <script>
-    // ⚠️ COLOCA AQUÍ TU URL DE GOOGLE APPS SCRIPT (debe terminar en /exec)
+    // ⚠️ COLOCA TU URL DE GOOGLE APPS SCRIPT AQUÍ
     const API_URL = 'https://script.google.com/macros/s/AKfycbw7gFClXsf6XkXOeA9I8CQnYTdkZXB7npARywTbMFzfu-_FpWh5WYkftSQX0swBiWj8/exec';
 
     let menuData = [];
     let carrito = [];
     let metodoPagoSeleccionado = '';
+    
+    // Variables temporales para la ventana modal de salsas
+    let productoTemp = null;
+    let modoPresentacionTemp = 'Bañadas';
 
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
@@ -158,13 +212,14 @@
       }, 1000);
     }
 
+    // CARGAR EL MENÚ DESDE GOOGLE APPS SCRIPT
     async function cargarMenu() {
       try {
         const response = await fetch(`${API_URL}?action=getMenu`);
         const data = await response.json();
         
         if (data.error) {
-          alert('Error en Google Sheets: ' + data.error);
+          alert('Error de base de datos: ' + data.error);
           return;
         }
         
@@ -173,7 +228,7 @@
         filtrarCategoria('TODOS');
       } catch (error) {
         console.error('Error al conectar:', error);
-        alert('No se pudo conectar con el servidor.');
+        alert('No se pudo conectar con la API de Google Sheets.');
       }
     }
 
@@ -192,7 +247,7 @@
       const filtrados = categoria === 'TODOS' ? menuData : menuData.filter(p => p.categoria === categoria);
       
       grid.innerHTML = filtrados.map(p => `
-        <div onclick="agregarAlCarrito('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
+        <div onclick="interceptalSeleccionProducto('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
           <div class="h-32 w-full bg-zinc-800 overflow-hidden relative">
             <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
             <span class="absolute top-2 right-2 bg-zinc-950/80 backdrop-blur text-xs px-2 py-0.5 rounded text-zinc-300 font-medium border border-zinc-700">
@@ -214,36 +269,83 @@
       lucide.createIcons();
     }
 
-    function agregarAlCarrito(idProducto) {
+    // EVALUAR SI EL PRODUCTO REQUIERE SELECCIÓN DE SALSA
+    function interceptalSeleccionProducto(idProducto) {
       const producto = menuData.find(p => p.id === idProducto);
       if (!producto) return;
 
-      // Si es de la categoría Alitas, por defecto asignamos la opción 'Bañadas'
-      const esAlitas = producto.categoria.toLowerCase().includes('alita');
-      const modoSalsa = esAlitas ? 'Bañadas' : '';
+      const esAlitasOFingers = producto.categoria.toLowerCase().includes('alita') || producto.categoria.toLowerCase().includes('finger');
 
-      const itemExistente = carrito.find(item => item.id === idProducto && item.modoSalsa === modoSalsa);
+      if (esAlitasOFingers) {
+        // Abrimos la ventana de personalización
+        productoTemp = producto;
+        modoPresentacionTemp = 'Bañadas';
+        document.getElementById('modal-prod-nombre').innerText = producto.nombre;
+        document.getElementById('modal-prod-sub').innerText = `Incluye selección de Salsa`;
+        setModoPresentacion('Bañadas');
+        document.getElementById('modal-salsas').classList.remove('hidden');
+        lucide.createIcons();
+      } else {
+        // Productos directos (Bebidas, Salsas Extra solo, etc.)
+        agregarDirectoAlCarrito(producto, '', '');
+      }
+    }
+
+    function setModoPresentacion(modo) {
+      modoPresentacionTemp = modo;
+      const btnBañadas = document.getElementById('btn-modo-Bañadas');
+      const btnAparte = document.getElementById('btn-modo-Aparte');
+
+      if (modo === 'Bañadas') {
+        btnBañadas.className = "modo-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition";
+        btnAparte.className = "modo-btn bg-zinc-800 text-zinc-400 py-2 rounded-lg text-xs hover:bg-zinc-700 transition";
+      } else {
+        btnAparte.className = "modo-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition";
+        btnBañadas.className = "modo-btn bg-zinc-800 text-zinc-400 py-2 rounded-lg text-xs hover:bg-zinc-700 transition";
+      }
+    }
+
+    function cerrarModalSalsas() {
+      document.getElementById('modal-salsas').classList.add('hidden');
+      productoTemp = null;
+    }
+
+    function confirmarAgregarConSalsa() {
+      if (!productoTemp) return;
+      const salsaElegida = document.getElementById('select-salsa-nombre').value;
+      agregarDirectoAlCarrito(productoTemp, salsaElegida, modoPresentacionTemp);
+      cerrarModalSalsas();
+    }
+
+    // AGREGAR AL CARRITO COMO LÍNEA ÚNICA SEGÚN SU SALSA
+    function agregarDirectoAlCarrito(producto, salsa, modo) {
+      // Creamos una clave única basada en ID + SALSA + PRESENTACIÓN
+      const claveUnica = `${producto.id}_${salsa}_${modo}`;
       
+      const itemExistente = carrito.find(item => item.claveUnica === claveUnica);
+
       if (itemExistente) {
         itemExistente.cantidad++;
       } else {
-        carrito.push({ ...producto, cantidad: 1, modoSalsa: modoSalsa });
+        carrito.push({
+          claveUnica: claveUnica,
+          id: producto.id,
+          nombre: producto.nombre,
+          precio: parseFloat(producto.precio),
+          salsa: salsa,
+          modo: modo,
+          cantidad: 1
+        });
       }
+      
       actualizarCarritoUI();
     }
 
-    function cambiarModoSalsa(indexCarrito, nuevoModo) {
-      if (carrito[indexCarrito]) {
-        carrito[indexCarrito].modoSalsa = nuevoModo;
-        actualizarCarritoUI();
-      }
-    }
-
-    function cambiarCantidad(indexCarrito, cambio) {
-      if (!carrito[indexCarrito]) return;
-      carrito[indexCarrito].cantidad += cambio;
-      if (carrito[indexCarrito].cantidad <= 0) {
-        carrito.splice(indexCarrito, 1);
+    function cambiarCantidad(index, cambio) {
+      if (!carrito[index]) return;
+      carrito[index].cantidad += cambio;
+      if (carrito[index].cantidad <= 0) {
+        carrito.splice(index, 1);
       }
       actualizarCarritoUI();
     }
@@ -266,34 +368,28 @@
 
     function actualizarCarritoUI() {
       const container = document.getElementById('cart-items');
+      
       if (carrito.length === 0) {
-        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados</div>`;
+        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos en la orden</div>`;
       } else {
         container.innerHTML = carrito.map((item, idx) => `
-          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
+          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-1">
             <div class="flex items-center justify-between">
               <div class="flex-1 pr-2">
-                <h4 class="text-xs font-bold text-zinc-200 line-clamp-1">${item.nombre}</h4>
-                <p class="text-xs text-red-500 font-semibold">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
+                <h4 class="text-xs font-bold text-zinc-100">${item.nombre}</h4>
+                ${item.salsa ? `
+                  <p class="text-[11px] text-red-400 font-semibold flex items-center gap-1 mt-0.5">
+                    🎯 ${item.salsa} <span class="bg-zinc-800 px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-zinc-700">${item.modo}</span>
+                  </p>
+                ` : ''}
+                <p class="text-xs text-red-500 font-black mt-1">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
               </div>
               <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded px-2 py-1">
                 <button onclick="cambiarCantidad(${idx}, -1)" class="text-zinc-400 hover:text-white font-bold text-xs">-</button>
-                <span class="text-xs font-bold w-4 text-center">${item.cantidad}</span>
+                <span class="text-xs font-bold w-4 text-center text-white">${item.cantidad}</span>
                 <button onclick="cambiarCantidad(${idx}, 1)" class="text-zinc-400 hover:text-white font-bold text-xs">+</button>
               </div>
             </div>
-
-            <!-- Opción de Salsa solo para Alitas -->
-            ${item.categoria.toLowerCase().includes('alita') ? `
-              <div class="flex gap-1 pt-1 border-t border-zinc-900 text-[10px]">
-                <button onclick="cambiarModoSalsa(${idx}, 'Bañadas')" class="flex-1 py-1 rounded ${item.modoSalsa === 'Bañadas' ? 'bg-red-600 text-white font-bold' : 'bg-zinc-900 text-zinc-400'}">
-                  Bañadas
-                </button>
-                <button onclick="cambiarModoSalsa(${idx}, 'Salsa Aparte')" class="flex-1 py-1 rounded ${item.modoSalsa === 'Salsa Aparte' ? 'bg-red-600 text-white font-bold' : 'bg-zinc-900 text-zinc-400'}">
-                  Salsa Aparte
-                </button>
-              </div>
-            ` : ''}
           </div>
         `).join('');
       }
@@ -305,6 +401,7 @@
       const btnCompletar = document.getElementById('btn-completar');
       const esValido = carrito.length > 0 && metodoPagoSeleccionado !== '';
       btnCompletar.disabled = !esValido;
+      
       if (esValido) {
         btnCompletar.className = "w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-red-950 cursor-pointer";
       } else {
@@ -312,25 +409,26 @@
       }
     }
 
+    // REGISTRAR LA VENTA Y GENERAR COMANDA DE COCINA
     async function procesarVenta() {
       if (carrito.length === 0 || !metodoPagoSeleccionado) return;
 
       const btnCompletar = document.getElementById('btn-completar');
       btnCompletar.disabled = true;
-      btnCompletar.innerText = "PROCESANDO VENTA...";
+      btnCompletar.innerText = "REGISTRANDO EN BASE DE DATOS...";
 
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
       
-      // Detalle estructurado incluyendo especificación de salsa
-      const detalle = carrito.map(i => {
-        const extraSalsa = i.modoSalsa ? ` [${i.modoSalsa}]` : '';
-        return `${i.cantidad}x ${i.nombre}${extraSalsa}`;
-      }).join(', ');
+      // Formatear texto detallado para guardar en Google Sheets
+      const detalleTexto = carrito.map(i => {
+        const especSalsa = i.salsa ? ` (${i.salsa} - ${i.modo})` : '';
+        return `${i.cantidad}x ${i.nombre}${especSalsa}`;
+      }).join(' | ');
 
       const datosVenta = {
         total: total.toFixed(2) + ' Bs',
         metodoPago: metodoPagoSeleccionado,
-        detalleJson: detalle
+        detalleJson: detalleTexto
       };
 
       try {
@@ -342,29 +440,38 @@
         const respuesta = await response.json();
         
         if (respuesta.exito) {
-          mostrarComandaModal(respuesta.idVenta, detalle, total.toFixed(2));
+          mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2));
         } else {
-          alert('Error al registrar venta: ' + respuesta.error);
+          alert('Error al guardar venta: ' + respuesta.error);
         }
       } catch (err) {
         console.error(err);
-        alert('Error de conexión con la API de Google Sheets.');
+        alert('Error de conexión con Google Sheets.');
       } finally {
-        btnCompletar.innerText = "REGISTRAR VENTA Y COMANDA";
+        btnCompletar.innerText = "ENVIAR A COCINA Y REGISTRAR";
       }
     }
 
-    // MOSTRAR COMANDA DE COCINA EN MODAL
-    function mostrarComandaModal(idVenta, detalleString, totalVal) {
-      document.getElementById('ticket-id').innerText = `ID: ${idVenta}`;
-      document.getElementById('ticket-fecha').innerText = `Fecha: ${new Date().toLocaleString()}`;
-      document.getElementById('ticket-total').innerText = `${totalVal} Bs`;
+    // DESPLEGAR COMANDA FORMATO TICKET PARA COCINA
+    function mostrarComandaCocinaModal(idVenta, totalBs) {
+      document.getElementById('ticket-id').innerText = `ORDEN #: ${idVenta}`;
+      document.getElementById('ticket-fecha').innerText = `Hora: ${new Date().toLocaleTimeString()} - ${new Date().toLocaleDateString()}`;
+      document.getElementById('ticket-total').innerText = `${totalBs} Bs`;
 
       const detallesContainer = document.getElementById('ticket-detalles');
+      
       detallesContainer.innerHTML = carrito.map(i => `
-        <div class="flex justify-between border-b pb-1">
-          <span>${i.cantidad}x ${i.nombre} ${i.modoSalsa ? `<b class="text-red-600">(${i.modoSalsa})</b>` : ''}</span>
-          <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
+        <div class="border-b border-zinc-200 pb-2">
+          <div class="flex justify-between items-start font-black text-base">
+            <span>${i.cantidad}x ${i.nombre}</span>
+            <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
+          </div>
+          ${i.salsa ? `
+            <div class="mt-1 bg-zinc-100 p-1.5 rounded text-xs">
+              <p class="font-bold text-black">SALSA: ${i.salsa.toUpperCase()}</p>
+              <p class="font-black text-red-600 uppercase">PREPARACIÓN: ${i.modo}</p>
+            </div>
+          ` : ''}
         </div>
       `).join('');
 
