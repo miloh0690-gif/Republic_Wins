@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Republic Wings - POS</title>
+  <title>Republic Wings - POS & Comandas</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Iconos Lucide -->
@@ -12,6 +12,14 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #1f2937; }
     ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+    
+    /* Estilos exclusivos para la impresión del ticket de cocina */
+    @media print {
+      body * { visibility: hidden; }
+      #ticket-cocina, #ticket-cocina * { visibility: visible; }
+      #ticket-cocina { position: absolute; left: 0; top: 0; width: 100%; color: black !important; }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen flex flex-col overflow-hidden">
@@ -22,7 +30,7 @@
       <div class="bg-red-600 text-white font-black px-3 py-1.5 rounded-lg text-lg tracking-wider shadow-lg shadow-red-950">
         REPUBLIC WINGS
       </div>
-      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">GitHub POS v1.0</span>
+      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">POS & Comandas v1.1</span>
     </div>
     <div class="text-right">
       <p id="clock" class="text-sm font-mono text-zinc-400">00:00:00</p>
@@ -50,7 +58,7 @@
         <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500 gap-3">
             <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p>Conectando con Google Sheets desde GitHub...</p>
+            <p>Cargando menú en Bolivianos (Bs)...</p>
           </div>
         </div>
       </div>
@@ -67,24 +75,26 @@
         </button>
       </div>
 
+      <!-- LISTA DE PRODUCTOS -->
       <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
         <div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados</div>
       </div>
 
+      <!-- RESUMEN Y PAGO -->
       <div class="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
         <div class="space-y-1 text-sm">
           <div class="flex justify-between text-zinc-400">
             <span>Subtotal</span>
-            <span id="cart-subtotal">$0.00</span>
+            <span id="cart-subtotal">0.00 Bs</span>
           </div>
           <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-zinc-800">
             <span>Total a Cobrar</span>
-            <span id="cart-total" class="text-red-500">$0.00</span>
+            <span id="cart-total" class="text-red-500">0.00 Bs</span>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉTODO DE PAGO</label>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉSTATIC DE PAGO</label>
           <div class="grid grid-cols-3 gap-2">
             <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Efectivo</button>
             <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Tarjeta</button>
@@ -93,14 +103,44 @@
         </div>
 
         <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed">
-          REGISTRAR VENTA
+          REGISTRAR VENTA Y COMANDA
         </button>
       </div>
     </section>
   </main>
 
+  <!-- MODAL / VISTA DE COMANDA PARA COCINA (IMPRESIÓN) -->
+  <div id="modal-comanda" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white text-zinc-900 p-6 rounded-xl max-w-sm w-full shadow-2xl" id="ticket-cocina">
+      <div class="text-center border-b pb-3 mb-3">
+        <h2 class="text-2xl font-black tracking-wider">REPUBLIC WINGS</h2>
+        <p class="text-xs font-bold text-zinc-600">*** COMANDA DE COCINA ***</p>
+        <p id="ticket-id" class="text-xs font-mono mt-1 text-zinc-500">ID: RW-0000</p>
+        <p id="ticket-fecha" class="text-xs text-zinc-500">Fecha: --/--/----</p>
+      </div>
+
+      <div class="space-y-2 mb-4 text-sm font-semibold" id="ticket-detalles">
+        <!-- Detalle de productos con instrucción de salsa -->
+      </div>
+
+      <div class="border-t pt-3 flex justify-between text-base font-black">
+        <span>TOTAL:</span>
+        <span id="ticket-total">0.00 Bs</span>
+      </div>
+
+      <div class="mt-6 flex gap-2 no-print">
+        <button onclick="imprimirComanda()" class="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-red-700">
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comanda
+        </button>
+        <button onclick="cerrarComanda()" class="bg-zinc-200 text-zinc-800 font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-zinc-300">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // ⚠️ REEMPLAZA ESTA URL CON LA TUYA DE GOOGLE APPS SCRIPT (debe terminar en /exec)
+    // ⚠️ COLOCA AQUÍ TU URL DE GOOGLE APPS SCRIPT (debe terminar en /exec)
     const API_URL = 'https://script.google.com/macros/s/AKfycbw7gFClXsf6XkXOeA9I8CQnYTdkZXB7npARywTbMFzfu-_FpWh5WYkftSQX0swBiWj8/exec';
 
     let menuData = [];
@@ -118,7 +158,6 @@
       }, 1000);
     }
 
-    // CARGAR MENÚ VÍA FETCH API (Conexión GitHub -> Google Sheets)
     async function cargarMenu() {
       try {
         const response = await fetch(`${API_URL}?action=getMenu`);
@@ -134,7 +173,7 @@
         filtrarCategoria('TODOS');
       } catch (error) {
         console.error('Error al conectar:', error);
-        alert('No se pudo conectar con el servidor. Verifica tu API_URL.');
+        alert('No se pudo conectar con el servidor.');
       }
     }
 
@@ -163,7 +202,7 @@
           <div class="p-3 flex-1 flex flex-col justify-between">
             <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${p.nombre}</h3>
             <div class="mt-2 flex justify-between items-center">
-              <span class="text-red-500 font-black text-base">$${p.precio}</span>
+              <span class="text-red-500 font-black text-base">${p.precio} Bs</span>
               <span class="bg-red-600/10 text-red-500 p-1.5 rounded-lg group-hover:bg-red-600 group-hover:text-white transition">
                 <i data-lucide="plus" class="w-4 h-4"></i>
               </span>
@@ -178,17 +217,34 @@
     function agregarAlCarrito(idProducto) {
       const producto = menuData.find(p => p.id === idProducto);
       if (!producto) return;
-      const itemExistente = carrito.find(item => item.id === idProducto);
-      if (itemExistente) { itemExistente.cantidad++; } 
-      else { carrito.push({ ...producto, cantidad: 1 }); }
+
+      // Si es de la categoría Alitas, por defecto asignamos la opción 'Bañadas'
+      const esAlitas = producto.categoria.toLowerCase().includes('alita');
+      const modoSalsa = esAlitas ? 'Bañadas' : '';
+
+      const itemExistente = carrito.find(item => item.id === idProducto && item.modoSalsa === modoSalsa);
+      
+      if (itemExistente) {
+        itemExistente.cantidad++;
+      } else {
+        carrito.push({ ...producto, cantidad: 1, modoSalsa: modoSalsa });
+      }
       actualizarCarritoUI();
     }
 
-    function cambiarCantidad(idProducto, cambio) {
-      const item = carrito.find(i => i.id === idProducto);
-      if (!item) return;
-      item.cantidad += cambio;
-      if (item.cantidad <= 0) { carrito = carrito.filter(i => i.id !== idProducto); }
+    function cambiarModoSalsa(indexCarrito, nuevoModo) {
+      if (carrito[indexCarrito]) {
+        carrito[indexCarrito].modoSalsa = nuevoModo;
+        actualizarCarritoUI();
+      }
+    }
+
+    function cambiarCantidad(indexCarrito, cambio) {
+      if (!carrito[indexCarrito]) return;
+      carrito[indexCarrito].cantidad += cambio;
+      if (carrito[indexCarrito].cantidad <= 0) {
+        carrito.splice(indexCarrito, 1);
+      }
       actualizarCarritoUI();
     }
 
@@ -213,24 +269,38 @@
       if (carrito.length === 0) {
         container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados</div>`;
       } else {
-        container.innerHTML = carrito.map(item => `
-          <div class="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
-            <div class="flex-1 pr-2">
-              <h4 class="text-xs font-bold text-zinc-200 line-clamp-1">${item.nombre}</h4>
-              <p class="text-xs text-red-500 font-semibold">$${(item.precio * item.cantidad).toFixed(2)}</p>
+        container.innerHTML = carrito.map((item, idx) => `
+          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 pr-2">
+                <h4 class="text-xs font-bold text-zinc-200 line-clamp-1">${item.nombre}</h4>
+                <p class="text-xs text-red-500 font-semibold">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
+              </div>
+              <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded px-2 py-1">
+                <button onclick="cambiarCantidad(${idx}, -1)" class="text-zinc-400 hover:text-white font-bold text-xs">-</button>
+                <span class="text-xs font-bold w-4 text-center">${item.cantidad}</span>
+                <button onclick="cambiarCantidad(${idx}, 1)" class="text-zinc-400 hover:text-white font-bold text-xs">+</button>
+              </div>
             </div>
-            <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded px-2 py-1">
-              <button onclick="cambiarCantidad('${item.id}', -1)" class="text-zinc-400 hover:text-white font-bold text-xs">-</button>
-              <span class="text-xs font-bold w-4 text-center">${item.cantidad}</span>
-              <button onclick="cambiarCantidad('${item.id}', 1)" class="text-zinc-400 hover:text-white font-bold text-xs">+</button>
-            </div>
+
+            <!-- Opción de Salsa solo para Alitas -->
+            ${item.categoria.toLowerCase().includes('alita') ? `
+              <div class="flex gap-1 pt-1 border-t border-zinc-900 text-[10px]">
+                <button onclick="cambiarModoSalsa(${idx}, 'Bañadas')" class="flex-1 py-1 rounded ${item.modoSalsa === 'Bañadas' ? 'bg-red-600 text-white font-bold' : 'bg-zinc-900 text-zinc-400'}">
+                  Bañadas
+                </button>
+                <button onclick="cambiarModoSalsa(${idx}, 'Salsa Aparte')" class="flex-1 py-1 rounded ${item.modoSalsa === 'Salsa Aparte' ? 'bg-red-600 text-white font-bold' : 'bg-zinc-900 text-zinc-400'}">
+                  Salsa Aparte
+                </button>
+              </div>
+            ` : ''}
           </div>
         `).join('');
       }
 
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-      document.getElementById('cart-subtotal').innerText = `$${total.toFixed(2)}`;
-      document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
+      document.getElementById('cart-subtotal').innerText = `${total.toFixed(2)} Bs`;
+      document.getElementById('cart-total').innerText = `${total.toFixed(2)} Bs`;
 
       const btnCompletar = document.getElementById('btn-completar');
       const esValido = carrito.length > 0 && metodoPagoSeleccionado !== '';
@@ -242,7 +312,6 @@
       }
     }
 
-    // ENVIAR VENTA A GOOGLE APPS SCRIPT DESDE GITHUB
     async function procesarVenta() {
       if (carrito.length === 0 || !metodoPagoSeleccionado) return;
 
@@ -251,10 +320,15 @@
       btnCompletar.innerText = "PROCESANDO VENTA...";
 
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-      const detalle = carrito.map(i => `${i.cantidad}x ${i.nombre}`).join(', ');
+      
+      // Detalle estructurado incluyendo especificación de salsa
+      const detalle = carrito.map(i => {
+        const extraSalsa = i.modoSalsa ? ` [${i.modoSalsa}]` : '';
+        return `${i.cantidad}x ${i.nombre}${extraSalsa}`;
+      }).join(', ');
 
       const datosVenta = {
-        total: total.toFixed(2),
+        total: total.toFixed(2) + ' Bs',
         metodoPago: metodoPagoSeleccionado,
         detalleJson: detalle
       };
@@ -268,17 +342,43 @@
         const respuesta = await response.json();
         
         if (respuesta.exito) {
-          alert(`¡Venta Registrada Exitosamente!\nCódigo: ${respuesta.idVenta}`);
-          vaciarCarrito();
+          mostrarComandaModal(respuesta.idVenta, detalle, total.toFixed(2));
         } else {
-          alert('Error: ' + respuesta.error);
+          alert('Error al registrar venta: ' + respuesta.error);
         }
       } catch (err) {
         console.error(err);
         alert('Error de conexión con la API de Google Sheets.');
       } finally {
-        btnCompletar.innerText = "REGISTRAR VENTA";
+        btnCompletar.innerText = "REGISTRAR VENTA Y COMANDA";
       }
+    }
+
+    // MOSTRAR COMANDA DE COCINA EN MODAL
+    function mostrarComandaModal(idVenta, detalleString, totalVal) {
+      document.getElementById('ticket-id').innerText = `ID: ${idVenta}`;
+      document.getElementById('ticket-fecha').innerText = `Fecha: ${new Date().toLocaleString()}`;
+      document.getElementById('ticket-total').innerText = `${totalVal} Bs`;
+
+      const detallesContainer = document.getElementById('ticket-detalles');
+      detallesContainer.innerHTML = carrito.map(i => `
+        <div class="flex justify-between border-b pb-1">
+          <span>${i.cantidad}x ${i.nombre} ${i.modoSalsa ? `<b class="text-red-600">(${i.modoSalsa})</b>` : ''}</span>
+          <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
+        </div>
+      `).join('');
+
+      document.getElementById('modal-comanda').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function imprimirComanda() {
+      window.print();
+    }
+
+    function cerrarComanda() {
+      document.getElementById('modal-comanda').classList.add('hidden');
+      vaciarCarrito();
     }
   </script>
 </body>
