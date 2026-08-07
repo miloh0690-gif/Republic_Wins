@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Republic Wings - POS</title>
+  <!-- Tailwind CSS para diseño moderno de alto nivel -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Iconos de Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Estilo para barra de desplazamiento fina y limpia */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1f2937; }
+    ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans h-screen flex flex-col overflow-hidden">
+
+  <!-- ENCABEZADO / BRANDING -->
+  <header class="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex justify-between items-center shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="bg-red-600 text-white font-black px-3 py-1.5 rounded-lg text-lg tracking-wider shadow-lg shadow-red-950">
+        REPUBLIC WINGS
+      </div>
+      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">Sistema POS v1.0</span>
+    </div>
+    <div class="text-right">
+      <p id="clock" class="text-sm font-mono text-zinc-400">00:00:00</p>
+      <p class="text-xs text-emerald-400 flex items-center justify-end gap-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
+      </p>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL (LAYOUT 2 COLUMNAS) -->
+  <main class="flex-1 flex overflow-hidden">
+    
+    <!-- COLUMNA IZQUIERDA: MENÚ DE PRODUCTOS -->
+    <section class="flex-1 flex flex-col border-r border-zinc-800 bg-zinc-950 overflow-hidden">
+      
+      <!-- BARRA DE CATEGORÍAS -->
+      <div id="category-bar" class="p-4 bg-zinc-900/50 border-b border-zinc-800 flex gap-2 overflow-x-auto shrink-0">
+        <button onclick="filtrarCategoria('TODOS')" class="cat-btn active bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
+          Todos
+        </button>
+        <!-- Las categorías dinámicas se cargarán aquí -->
+      </div>
+
+      <!-- REJILLA DE PRODUCTOS (CARDS) -->
+      <div class="flex-1 p-4 overflow-y-auto">
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Spinner de Carga Inicial -->
+          <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500 gap-3">
+            <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <p>Cargando menú desde Google Sheets...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLUMNA DERECHA: PANEL DE COMANDA / CARRITO -->
+    <section class="w-96 bg-zinc-900 flex flex-col shrink-0">
+      
+      <!-- CABECERA DEL CARRITO -->
+      <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/80">
+        <h2 class="font-bold text-lg flex items-center gap-2">
+          <i data-lucide="shopping-cart" class="w-5 h-5 text-red-500"></i> Orden Actual
+        </h2>
+        <button onclick="vaciarCarrito()" class="text-xs text-zinc-400 hover:text-red-400 transition">
+          Vaciar
+        </button>
+      </div>
+
+      <!-- LISTA DE PRODUCTOS EN LA ORDEN -->
+      <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div class="text-center text-zinc-500 py-12 text-sm">
+          No hay productos agregados a la orden
+        </div>
+      </div>
+
+      <!-- RESUMEN Y PAGO -->
+      <div class="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
+        <div class="space-y-1 text-sm">
+          <div class="flex justify-between text-zinc-400">
+            <span>Subtotal</span>
+            <span id="cart-subtotal">$0.00</span>
+          </div>
+          <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-zinc-800">
+            <span>Total a Cobrar</span>
+            <span id="cart-total" class="text-red-500">$0.00</span>
+          </div>
+        </div>
+
+        <!-- SELECCIÓN DE MÉTODO DE PAGO -->
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉTODO DE PAGO</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">
+              Efectivo
+            </button>
+            <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">
+              Tarjeta
+            </button>
+            <button onclick="seleccionarPago('QR')" id="btn-pago-QR" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">
+              QR / Transfer
+            </button>
+          </div>
+        </div>
+
+        <!-- BOTÓN FINALIZAR VENTA -->
+        <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed">
+          REGISTRAR VENTA
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- LÓGICA FRONT-END (JAVASCRIPT DE INTERFAZ) -->
+  <script>
+    // ESTADO DE LA APLICACIÓN EN TIEMPO DE EJECUCIÓN
+    let menuData = [];
+    let carrito = [];
+    let metodoPagoSeleccionado = '';
+
+    // INICIALIZACIÓN
+    document.addEventListener('DOMContentLoaded', () => {
+      iniciarReloj();
+      cargarMenu();
+    });
+
+    function iniciarReloj() {
+      setInterval(() => {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString();
+      }, 1000);
+    }
+
+    // 1. CARGAR MENÚ DESDE EL BACKEND (Google Apps Script)
+    function cargarMenu() {
+      google.script.run
+        .withSuccessHandler(renderizarMenu)
+        .withFailureHandler(error => {
+          alert('Error conectando con la base de datos');
+          console.error(error);
+        })
+        .obtenerMenu();
+    }
+
+    function renderizarMenu(productos) {
+      if (productos.error) {
+        alert(productos.error);
+        return;
+      }
+      menuData = productos;
+      renderizarCategorias();
+      filtrarCategoria('TODOS');
+    }
+
+    // 2. RENDERIZAR CATEGORÍAS
+    function renderizarCategorias() {
+      const categorias = ['TODOS', ...new Set(menuData.map(p => p.categoria))];
+      const container = document.getElementById('category-bar');
+      container.innerHTML = categorias.map(cat => `
+        <button onclick="filtrarCategoria('${cat}')" class="cat-btn ${cat === 'TODOS' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'} px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    // 3. FILTRAR Y MOSTRAR TARJETAS DE PRODUCTO
+    function filtrarCategoria(categoria) {
+      const grid = document.getElementById('products-grid');
+      const filtrados = categoria === 'TODOS' ? menuData : menuData.filter(p => p.categoria === categoria);
+      
+      grid.innerHTML = filtrados.map(p => `
+        <div onclick="agregarAlCarrito('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
+          <div class="h-32 w-full bg-zinc-800 overflow-hidden relative">
+            <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+            <span class="absolute top-2 right-2 bg-zinc-950/80 backdrop-blur text-xs px-2 py-0.5 rounded text-zinc-300 font-medium border border-zinc-700">
+              ${p.categoria}
+            </span>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between">
+            <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${p.nombre}</h3>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="text-red-500 font-black text-base">$${p.precio}</span>
+              <span class="bg-red-600/10 text-red-500 p-1.5 rounded-lg group-hover:bg-red-600 group-hover:text-white transition">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      lucide.createIcons();
+    }
+
+    // 4. LÓGICA DEL CARRITO DE COMPRAS
+    function agregarAlCarrito(idProducto) {
+      const producto = menuData.find(p => p.id === idProducto);
+      if (!producto) return;
+
+      const itemExistente = carrito.find(item => item.id === idProducto);
+      if (itemExistente) {
+        itemExistente.cantidad++;
+      } else {
+        carrito.push({ ...producto, cantidad: 1 });
+      }
+      actualizarCarritoUI();
+    }
+
+    function cambiarCantidad(idProducto, cambio) {
+      const item = carrito.find(i => i.id === idProducto);
+      if (!item) return;
+
+      item.cantidad += cambio;
+      if (item.cantidad <= 0) {
+        carrito = carrito.filter(i => i.id !== idProducto);
+      }
+      actualizarCarritoUI();
+    }
+
+    function vaciarCarrito() {
+      carrito = [];
+      metodoPagoSeleccionado = '';
+      actualizarCarritoUI();
+    }
+
+    function seleccionarPago(metodo) {
+      metodoPagoSeleccionado = metodo;
+      document.querySelectorAll('.pago-btn').forEach(btn => {
+        btn.classList.remove('border-red-600', 'bg-red-600/20', 'text-red-400');
+      });
+      const btnActivo = document.getElementById(`btn-pago-${metodo}`);
+      if (btnActivo) {
+        btnActivo.classList.add('border-red-600', 'bg-red-600/20', 'text-red-400');
+      }
+      actualizarCarritoUI();
+    }
+
+    function actualizarCarritoUI() {
+      const container = document.getElementById('cart-items');
+      
+      if (carrito.length === 0) {
+        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados a la orden</div>`;
+      } else {
+        container.innerHTML = carrito.map(item => `
+          <div class="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+            <div class="flex-1 pr-2">
+              <h4 class="text-xs font-bold text-zinc-200 line-clamp-1">${item.nombre}</h4>
+              <p class="text-xs text-red-500 font-semibold">$${(item.precio * item.cantidad).toFixed(2)}</p>
+            </div>
+            <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded px-2 py-1">
+              <button onclick="cambiarCantidad('${item.id}', -1)" class="text-zinc-400 hover:text-white font-bold text-xs">-</button>
+              <span class="text-xs font-bold w-4 text-center">${item.cantidad}</span>
+              <button onclick="cambiarCantidad('${item.id}', 1)" class="text-zinc-400 hover:text-white font-bold text-xs">+</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      document.getElementById('cart-subtotal').innerText = `$${total.toFixed(2)}`;
+      document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
+
+      const btnCompletar = document.getElementById('btn-completar');
+      const esValido = carrito.length > 0 && metodoPagoSeleccionado !== '';
+      
+      btnCompletar.disabled = !esValido;
+      if (esValido) {
+        btnCompletar.className = "w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-red-950 cursor-pointer";
+      } else {
+        btnCompletar.className = "w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition cursor-not-allowed";
+      }
+    }
+
+    // 5. REGISTRAR VENTA EN GOOGLE SHEETS
+    function procesarVenta() {
+      if (carrito.length === 0 || !metodoPagoSeleccionado) return;
+
+      const btnCompletar = document.getElementById('btn-completar');
+      btnCompletar.disabled = true;
+      btnCompletar.innerText = "PROCESANDO VENTA...";
+
+      const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      const detalle = carrito.map(i => `${i.cantidad}x ${i.nombre}`).join(', ');
+
+      const datosVenta = {
+        total: total.toFixed(2),
+        metodoPago: metodoPagoSeleccionado,
+        detalleJson: detalle
+      };
+
+      google.script.run
+        .withSuccessHandler(respuesta => {
+          if (respuesta.exito) {
+            alert(`¡Venta Registrada Exitosamente!\nCódigo de Transacción: ${respuesta.idVenta}`);
+            vaciarCarrito();
+          } else {
+            alert('Error al registrar la venta: ' + respuesta.error);
+          }
+          btnCompletar.innerText = "REGISTRAR VENTA";
+        })
+        .withFailureHandler(err => {
+          alert('Error de conexión con el servidor.');
+          console.error(err);
+          btnCompletar.innerText = "REGISTRAR VENTA";
+        })
+        .registrarVenta(datosVenta);
+    }
+  </script>
+</body>
+</html>
