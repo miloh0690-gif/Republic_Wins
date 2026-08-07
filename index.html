@@ -4,12 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Republic Wings - POS</title>
-  <!-- Tailwind CSS para diseño moderno de alto nivel -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Iconos de Lucide -->
+  <!-- Iconos Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* Estilo para barra de desplazamiento fina y limpia */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #1f2937; }
     ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
@@ -23,7 +22,7 @@
       <div class="bg-red-600 text-white font-black px-3 py-1.5 rounded-lg text-lg tracking-wider shadow-lg shadow-red-950">
         REPUBLIC WINGS
       </div>
-      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">Sistema POS v1.0</span>
+      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">GitHub POS v1.0</span>
     </div>
     <div class="text-right">
       <p id="clock" class="text-sm font-mono text-zinc-400">00:00:00</p>
@@ -33,36 +32,32 @@
     </div>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL (LAYOUT 2 COLUMNAS) -->
+  <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 flex overflow-hidden">
     
-    <!-- COLUMNA IZQUIERDA: MENÚ DE PRODUCTOS -->
+    <!-- COLUMNA IZQUIERDA: MENÚ -->
     <section class="flex-1 flex flex-col border-r border-zinc-800 bg-zinc-950 overflow-hidden">
       
-      <!-- BARRA DE CATEGORÍAS -->
+      <!-- CATEGORÍAS -->
       <div id="category-bar" class="p-4 bg-zinc-900/50 border-b border-zinc-800 flex gap-2 overflow-x-auto shrink-0">
-        <button onclick="filtrarCategoria('TODOS')" class="cat-btn active bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
+        <button onclick="filtrarCategoria('TODOS')" class="cat-btn bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
           Todos
         </button>
-        <!-- Las categorías dinámicas se cargarán aquí -->
       </div>
 
-      <!-- REJILLA DE PRODUCTOS (CARDS) -->
+      <!-- REJILLA DE PRODUCTOS -->
       <div class="flex-1 p-4 overflow-y-auto">
         <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <!-- Spinner de Carga Inicial -->
           <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500 gap-3">
             <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p>Cargando menú desde Google Sheets...</p>
+            <p>Conectando con Google Sheets desde GitHub...</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- COLUMNA DERECHA: PANEL DE COMANDA / CARRITO -->
+    <!-- COLUMNA DERECHA: ORDEN Y CARRITO -->
     <section class="w-96 bg-zinc-900 flex flex-col shrink-0">
-      
-      <!-- CABECERA DEL CARRITO -->
       <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/80">
         <h2 class="font-bold text-lg flex items-center gap-2">
           <i data-lucide="shopping-cart" class="w-5 h-5 text-red-500"></i> Orden Actual
@@ -72,14 +67,10 @@
         </button>
       </div>
 
-      <!-- LISTA DE PRODUCTOS EN LA ORDEN -->
       <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="text-center text-zinc-500 py-12 text-sm">
-          No hay productos agregados a la orden
-        </div>
+        <div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados</div>
       </div>
 
-      <!-- RESUMEN Y PAGO -->
       <div class="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
         <div class="space-y-1 text-sm">
           <div class="flex justify-between text-zinc-400">
@@ -92,23 +83,15 @@
           </div>
         </div>
 
-        <!-- SELECCIÓN DE MÉTODO DE PAGO -->
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉTODO DE PAGO</label>
           <div class="grid grid-cols-3 gap-2">
-            <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">
-              Efectivo
-            </button>
-            <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">
-              Tarjeta
-            </button>
-            <button onclick="seleccionarPago('QR')" id="btn-pago-QR" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">
-              QR / Transfer
-            </button>
+            <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Efectivo</button>
+            <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Tarjeta</button>
+            <button onclick="seleccionarPago('QR')" id="btn-pago-QR" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">QR / Transfer</button>
           </div>
         </div>
 
-        <!-- BOTÓN FINALIZAR VENTA -->
         <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed">
           REGISTRAR VENTA
         </button>
@@ -116,14 +99,14 @@
     </section>
   </main>
 
-  <!-- LÓGICA FRONT-END (JAVASCRIPT DE INTERFAZ) -->
   <script>
-    // ESTADO DE LA APLICACIÓN EN TIEMPO DE EJECUCIÓN
+    // ⚠️ REEMPLAZA ESTA URL CON LA TUYA DE GOOGLE APPS SCRIPT (debe terminar en /exec)
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw7gFClXsf6XkXOeA9I8CQnYTdkZXB7npARywTbMFzfu-_FpWh5WYkftSQX0swBiWj8/exec';
+
     let menuData = [];
     let carrito = [];
     let metodoPagoSeleccionado = '';
 
-    // INICIALIZACIÓN
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
       cargarMenu();
@@ -131,33 +114,30 @@
 
     function iniciarReloj() {
       setInterval(() => {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString();
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
       }, 1000);
     }
 
-    // 1. CARGAR MENÚ DESDE EL BACKEND (Google Apps Script)
-    function cargarMenu() {
-      google.script.run
-        .withSuccessHandler(renderizarMenu)
-        .withFailureHandler(error => {
-          alert('Error conectando con la base de datos');
-          console.error(error);
-        })
-        .obtenerMenu();
-    }
-
-    function renderizarMenu(productos) {
-      if (productos.error) {
-        alert(productos.error);
-        return;
+    // CARGAR MENÚ VÍA FETCH API (Conexión GitHub -> Google Sheets)
+    async function cargarMenu() {
+      try {
+        const response = await fetch(`${API_URL}?action=getMenu`);
+        const data = await response.json();
+        
+        if (data.error) {
+          alert('Error en Google Sheets: ' + data.error);
+          return;
+        }
+        
+        menuData = data;
+        renderizarCategorias();
+        filtrarCategoria('TODOS');
+      } catch (error) {
+        console.error('Error al conectar:', error);
+        alert('No se pudo conectar con el servidor. Verifica tu API_URL.');
       }
-      menuData = productos;
-      renderizarCategorias();
-      filtrarCategoria('TODOS');
     }
 
-    // 2. RENDERIZAR CATEGORÍAS
     function renderizarCategorias() {
       const categorias = ['TODOS', ...new Set(menuData.map(p => p.categoria))];
       const container = document.getElementById('category-bar');
@@ -168,7 +148,6 @@
       `).join('');
     }
 
-    // 3. FILTRAR Y MOSTRAR TARJETAS DE PRODUCTO
     function filtrarCategoria(categoria) {
       const grid = document.getElementById('products-grid');
       const filtrados = categoria === 'TODOS' ? menuData : menuData.filter(p => p.categoria === categoria);
@@ -176,7 +155,7 @@
       grid.innerHTML = filtrados.map(p => `
         <div onclick="agregarAlCarrito('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
           <div class="h-32 w-full bg-zinc-800 overflow-hidden relative">
-            <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+            <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
             <span class="absolute top-2 right-2 bg-zinc-950/80 backdrop-blur text-xs px-2 py-0.5 rounded text-zinc-300 font-medium border border-zinc-700">
               ${p.categoria}
             </span>
@@ -196,28 +175,20 @@
       lucide.createIcons();
     }
 
-    // 4. LÓGICA DEL CARRITO DE COMPRAS
     function agregarAlCarrito(idProducto) {
       const producto = menuData.find(p => p.id === idProducto);
       if (!producto) return;
-
       const itemExistente = carrito.find(item => item.id === idProducto);
-      if (itemExistente) {
-        itemExistente.cantidad++;
-      } else {
-        carrito.push({ ...producto, cantidad: 1 });
-      }
+      if (itemExistente) { itemExistente.cantidad++; } 
+      else { carrito.push({ ...producto, cantidad: 1 }); }
       actualizarCarritoUI();
     }
 
     function cambiarCantidad(idProducto, cambio) {
       const item = carrito.find(i => i.id === idProducto);
       if (!item) return;
-
       item.cantidad += cambio;
-      if (item.cantidad <= 0) {
-        carrito = carrito.filter(i => i.id !== idProducto);
-      }
+      if (item.cantidad <= 0) { carrito = carrito.filter(i => i.id !== idProducto); }
       actualizarCarritoUI();
     }
 
@@ -233,17 +204,14 @@
         btn.classList.remove('border-red-600', 'bg-red-600/20', 'text-red-400');
       });
       const btnActivo = document.getElementById(`btn-pago-${metodo}`);
-      if (btnActivo) {
-        btnActivo.classList.add('border-red-600', 'bg-red-600/20', 'text-red-400');
-      }
+      if (btnActivo) { btnActivo.classList.add('border-red-600', 'bg-red-600/20', 'text-red-400'); }
       actualizarCarritoUI();
     }
 
     function actualizarCarritoUI() {
       const container = document.getElementById('cart-items');
-      
       if (carrito.length === 0) {
-        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados a la orden</div>`;
+        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos agregados</div>`;
       } else {
         container.innerHTML = carrito.map(item => `
           <div class="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
@@ -266,7 +234,6 @@
 
       const btnCompletar = document.getElementById('btn-completar');
       const esValido = carrito.length > 0 && metodoPagoSeleccionado !== '';
-      
       btnCompletar.disabled = !esValido;
       if (esValido) {
         btnCompletar.className = "w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-red-950 cursor-pointer";
@@ -275,8 +242,8 @@
       }
     }
 
-    // 5. REGISTRAR VENTA EN GOOGLE SHEETS
-    function procesarVenta() {
+    // ENVIAR VENTA A GOOGLE APPS SCRIPT DESDE GITHUB
+    async function procesarVenta() {
       if (carrito.length === 0 || !metodoPagoSeleccionado) return;
 
       const btnCompletar = document.getElementById('btn-completar');
@@ -292,22 +259,26 @@
         detalleJson: detalle
       };
 
-      google.script.run
-        .withSuccessHandler(respuesta => {
-          if (respuesta.exito) {
-            alert(`¡Venta Registrada Exitosamente!\nCódigo de Transacción: ${respuesta.idVenta}`);
-            vaciarCarrito();
-          } else {
-            alert('Error al registrar la venta: ' + respuesta.error);
-          }
-          btnCompletar.innerText = "REGISTRAR VENTA";
-        })
-        .withFailureHandler(err => {
-          alert('Error de conexión con el servidor.');
-          console.error(err);
-          btnCompletar.innerText = "REGISTRAR VENTA";
-        })
-        .registrarVenta(datosVenta);
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(datosVenta)
+        });
+        
+        const respuesta = await response.json();
+        
+        if (respuesta.exito) {
+          alert(`¡Venta Registrada Exitosamente!\nCódigo: ${respuesta.idVenta}`);
+          vaciarCarrito();
+        } else {
+          alert('Error: ' + respuesta.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión con la API de Google Sheets.');
+      } finally {
+        btnCompletar.innerText = "REGISTRAR VENTA";
+      }
     }
   </script>
 </body>
