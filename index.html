@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Republic Wings - POS & Comandas</title>
-  <!-- Tailwind CSS para diseño responsivo -->
+  <!-- Tailwind CSS para interfaz responsiva -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Iconos Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,7 +13,7 @@
     ::-webkit-scrollbar-track { background: #1f2937; }
     ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
     
-    /* Formato exclusivo para la impresión de la comanda de cocina */
+    /* Formato de impresión para comanda de cocina */
     @media print {
       body * { visibility: hidden; }
       #ticket-cocina, #ticket-cocina * { visibility: visible; }
@@ -24,13 +24,13 @@
 </head>
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen flex flex-col overflow-hidden">
 
-  <!-- ENCABEZADO PRINCIPAL -->
+  <!-- ENCABEZADO PRINCIPAL DE LA APLICACIÓN -->
   <header class="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex justify-between items-center shrink-0">
     <div class="flex items-center gap-3">
       <div class="bg-red-600 text-white font-black px-3 py-1.5 rounded-lg text-lg tracking-wider shadow-lg shadow-red-950">
         REPUBLIC WINGS
       </div>
-      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">POS v2.1 (Fingers & Canasta)</span>
+      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">POS v2.2 (Multi-Salsas)</span>
     </div>
     <div class="text-right">
       <p id="clock" class="text-sm font-mono text-zinc-400">00:00:00</p>
@@ -40,13 +40,13 @@
     </div>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
+  <!-- CUERPO DEL POS -->
   <main class="flex-1 flex overflow-hidden">
     
-    <!-- COLUMNA IZQUIERDA: CATÁLOGO Y CATEGORÍAS -->
+    <!-- SECCIÓN IZQUIERDA: MENÚ Y CATEGORÍAS -->
     <section class="flex-1 flex flex-col border-r border-zinc-800 bg-zinc-950 overflow-hidden">
       
-      <!-- BARRA DE CATEGORÍAS -->
+      <!-- BARRA DE CATEGORÍAS FILTRABLES -->
       <div id="category-bar" class="p-4 bg-zinc-900/50 border-b border-zinc-800 flex gap-2 overflow-x-auto shrink-0">
         <button onclick="filtrarCategoria('TODOS')" class="cat-btn bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
           Todos
@@ -58,13 +58,13 @@
         <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500 gap-3">
             <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p>Sincronizando productos desde Google Sheets...</p>
+            <p>Cargando productos...</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- COLUMNA DERECHA: ORDEN Y CARRITO -->
+    <!-- SECCIÓN DERECHA: ORDEN Y PAGO -->
     <section class="w-96 bg-zinc-900 flex flex-col shrink-0">
       <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/80">
         <h2 class="font-bold text-lg flex items-center gap-2">
@@ -75,12 +75,12 @@
         </button>
       </div>
 
-      <!-- DETALLE DEL CARRITO -->
+      <!-- DETALLE DE ELEMENTOS EN EL CARRITO -->
       <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
         <div class="text-center text-zinc-500 py-12 text-sm">No hay productos en la orden</div>
       </div>
 
-      <!-- PANEL DE COBRO Y PAGO -->
+      <!-- PANEL DE TOTALES Y MÉTODOS DE PAGO -->
       <div class="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
         <div class="space-y-1 text-sm">
           <div class="flex justify-between text-zinc-400">
@@ -109,56 +109,45 @@
     </section>
   </main>
 
-  <!-- MODAL 1: PERSONALIZACIÓN DE SALSAS (ALITAS & FINGERS) -->
+  <!-- MODAL DE CONFIGURACIÓN MULTI-SALSA -->
   <div id="modal-salsas" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-zinc-900 border border-zinc-700 text-zinc-100 p-6 rounded-xl max-w-md w-full shadow-2xl">
+    <div class="bg-zinc-900 border border-zinc-700 text-zinc-100 p-6 rounded-xl max-w-lg w-full shadow-2xl">
+      
+      <!-- ENCABEZADO DEL MODAL -->
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
         <div>
-          <h3 id="modal-prod-nombre" class="font-bold text-lg text-white">Configurar Salsas</h3>
-          <p id="modal-prod-sub" class="text-xs text-red-400 font-medium">Selecciona tus opciones de salsa</p>
+          <h3 id="modal-prod-nombre" class="font-bold text-lg text-white">Configurar Producto</h3>
+          <p class="text-xs text-red-400 font-medium">Selección personalizada de salsas</p>
         </div>
         <button onclick="cerrarModalSalsas()" class="text-zinc-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="space-y-4 mb-6">
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">ELIGE LA SALSA</label>
-          <select id="select-salsa-nombre" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-red-500">
-            <option value="Miel y Mostaza">Miel y Mostaza</option>
-            <option value="Barbacoa">Barbacoa</option>
-            <option value="Jack Daniel's">Jack Daniel's</option>
-            <option value="Blue Cheese">Blue Cheese</option>
-            <option value="Albahaca y Hierbas">Albahaca y Hierbas</option>
-            <option value="Hot Republic">Hot Republic 🔥</option>
-            <option value="Bufallo Wild">Bufallo Wild 🔥</option>
-            <option value="Extra Hot Republic (Bañado)">Extra Hot Republic (Solo Bañado) 🔥🔥</option>
-            <option value="Ajo Parmesano (Bañado)">Ajo Parmesano (Solo Bañado)</option>
-            <option value="Lemon Pepper (Bañado)">Lemon Pepper (Solo Bañado)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">PRESENTACIÓN DE LA SALSA</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="setModoPresentacion('Bañadas')" id="btn-modo-Bañadas" class="modo-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition">
-              Bañadas
-            </button>
-            <button type="button" onclick="setModoPresentacion('Salsa Aparte')" id="btn-modo-Aparte" class="modo-btn bg-zinc-800 text-zinc-300 py-2 rounded-lg text-xs hover:bg-zinc-700 transition">
-              Salsa Aparte
-            </button>
-          </div>
+      <!-- SELECTOR DE CANTIDAD DE SALSAS -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-zinc-400 mb-2">¿CUÁNTAS SALSAS INCLUYE ESTE COMBO?</label>
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" onclick="setCantidadSalsas(1)" id="btn-num-salsas-1" class="num-salsa-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition">1 Salsa</button>
+          <button type="button" onclick="setCantidadSalsas(2)" id="btn-num-salsas-2" class="num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition">2 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(3)" id="btn-num-salsas-3" class="num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition">3 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(4)" id="btn-num-salsas-4" class="num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition">4 Salsas</button>
         </div>
       </div>
 
-      <button onclick="confirmarAgregarConSalsa()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-red-950">
-        Agregar a la Orden
+      <!-- CONTENEDOR DINÁMICO DE SALSAS -->
+      <div id="contenedor-filas-salsas" class="space-y-3 max-h-60 overflow-y-auto pr-1 mb-6">
+        <!-- Generado dinámicamente mediante JavaScript -->
+      </div>
+
+      <!-- BOTÓN CONFIRMAR -->
+      <button onclick="confirmarAgregarConSalsas()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-red-950">
+        Agregar Producto a la Orden
       </button>
     </div>
   </div>
 
-  <!-- MODAL 2: COMANDA PARA COCINA -->
+  <!-- MODAL DE COMANDA PARA COCINA -->
   <div id="modal-comanda" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white text-zinc-900 p-6 rounded-xl max-w-sm w-full shadow-2xl" id="ticket-cocina">
       <div class="text-center border-b pb-3 mb-3">
@@ -189,15 +178,30 @@
   </div>
 
   <script>
-    // ⚠️ REEMPLAZA CON TU URL DE GOOGLE APPS SCRIPT
+    // ⚠️ REEMPLAZA CON TU URL OFICIAL DE GOOGLE APPS SCRIPT
     const API_URL = 'https://script.google.com/macros/s/AKfycbw7gFClXsf6XkXOeA9I8CQnYTdkZXB7npARywTbMFzfu-_FpWh5WYkftSQX0swBiWj8/exec';
+
+    // Opciones oficiales de salsas del menú
+    const LISTA_SALSAS = [
+      "Miel y Mostaza",
+      "Barbacoa",
+      "Jack Daniel's",
+      "Blue Cheese",
+      "Albahaca y Hierbas",
+      "Hot Republic 🔥",
+      "Bufallo Wild 🔥",
+      "Extra Hot Republic (Bañado) 🔥🔥",
+      "Ajo Parmesano (Bañado)",
+      "Lemon Pepper (Bañado)"
+    ];
 
     let menuData = [];
     let carrito = [];
     let metodoPagoSeleccionado = '';
     
     let productoTemp = null;
-    let modoPresentacionTemp = 'Bañadas';
+    let cantidadSalsasTemp = 1;
+    let seleccionesSalsas = []; // Guarda [{ nombre: '', modo: 'Bañadas' }, ...]
 
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
@@ -216,7 +220,7 @@
         const data = await response.json();
         
         if (data.error) {
-          alert('Error de base de datos: ' + data.error);
+          alert('Error en base de datos: ' + data.error);
           return;
         }
         
@@ -225,7 +229,7 @@
         filtrarCategoria('TODOS');
       } catch (error) {
         console.error('Error al conectar:', error);
-        alert('No se pudo conectar con Google Sheets.');
+        alert('No se pudo sincronizar con Google Sheets.');
       }
     }
 
@@ -244,7 +248,7 @@
       const filtrados = categoria === 'TODOS' ? menuData : menuData.filter(p => p.categoria === categoria);
       
       grid.innerHTML = filtrados.map(p => `
-        <div onclick="interceptalSeleccionProducto('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
+        <div onclick="interceptarSeleccionProducto('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
           <div class="h-32 w-full bg-zinc-800 overflow-hidden relative">
             <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
             <span class="absolute top-2 right-2 bg-zinc-950/80 backdrop-blur text-xs px-2 py-0.5 rounded text-zinc-300 font-medium border border-zinc-700">
@@ -266,8 +270,8 @@
       lucide.createIcons();
     }
 
-    // LÓGICA DE DETECCIÓN: ALITAS Y FINGERS REQUIEREN SELECCIÓN DE SALSA
-    function interceptalSeleccionProducto(idProducto) {
+    // VERIFICA SI EL PRODUCTO REQUIERE SELECCIÓN DE SALSAS
+    function interceptarSeleccionProducto(idProducto) {
       const producto = menuData.find(p => p.id === idProducto);
       if (!producto) return;
 
@@ -276,29 +280,77 @@
 
       if (requiereSalsa) {
         productoTemp = producto;
-        modoPresentacionTemp = 'Bañadas';
         document.getElementById('modal-prod-nombre').innerText = producto.nombre;
-        document.getElementById('modal-prod-sub').innerText = `Selección de Salsa`;
-        setModoPresentacion('Bañadas');
+        setCantidadSalsas(1); // Por defecto inicia en 1 salsa
         document.getElementById('modal-salsas').classList.remove('hidden');
-        lucide.createIcons();
       } else {
         // Productos directos (Pollo a la Canasta, Bebidas, etc.)
-        agregarDirectoAlCarrito(producto, '', '');
+        agregarDirectoAlCarrito(producto, []);
       }
     }
 
-    function setModoPresentacion(modo) {
-      modoPresentacionTemp = modo;
-      const btnBañadas = document.getElementById('btn-modo-Bañadas');
-      const btnAparte = document.getElementById('btn-modo-Aparte');
+    // DETERMINA LA CANTIDAD DE SALSAS A CONFIGURAR
+    function setCantidadSalsas(num) {
+      cantidadSalsasTemp = num;
 
-      if (modo === 'Bañadas') {
-        btnBañadas.className = "modo-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition";
-        btnAparte.className = "modo-btn bg-zinc-800 text-zinc-400 py-2 rounded-lg text-xs hover:bg-zinc-700 transition";
-      } else {
-        btnAparte.className = "modo-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition";
-        btnBañadas.className = "modo-btn bg-zinc-800 text-zinc-400 py-2 rounded-lg text-xs hover:bg-zinc-700 transition";
+      // Actualizar estilo visual de los botones de cantidad
+      [1, 2, 3, 4].forEach(i => {
+        const btn = document.getElementById(`btn-num-salsas-${i}`);
+        if (i === num) {
+          btn.className = "num-salsa-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition";
+        } else {
+          btn.className = "num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition";
+        }
+      });
+
+      // Preservar selecciones anteriores o crear nuevas por defecto
+      seleccionesSalsas = [];
+      for (let i = 0; i < num; i++) {
+        seleccionesSalsas.push({
+          nombre: LISTA_SALSAS[0],
+          modo: 'Bañadas'
+        });
+      }
+
+      renderizarFilasSalsas();
+    }
+
+    // RENDERIZA LOS DESPLEGABLES Y BOTONES SEGÚN LA CANTIDAD DE SALSAS SELECCIONADA
+    function renderizarFilasSalsas() {
+      const contenedor = document.getElementById('contenedor-filas-salsas');
+      
+      contenedor.innerHTML = seleccionesSalsas.map((item, idx) => `
+        <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
+          <span class="text-xs font-bold text-red-500 uppercase tracking-wider">Salsa #${idx + 1}</span>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <select onchange="actualizarSalsaSabor(${idx}, this.value)" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-red-500">
+                ${LISTA_SALSAS.map(s => `<option value="${s}" ${s === item.nombre ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-1">
+              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Bañadas')" id="btn-modo-${idx}-Bañadas" class="py-1.5 rounded text-[11px] font-bold ${item.modo === 'Bañadas' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}">
+                Bañadas
+              </button>
+              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Salsa Aparte')" id="btn-modo-${idx}-Salsa Aparte" class="py-1.5 rounded text-[11px] font-bold ${item.modo === 'Salsa Aparte' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}">
+                Aparte
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function actualizarSalsaSabor(index, valor) {
+      if (seleccionesSalsas[index]) {
+        seleccionesSalsas[index].nombre = valor;
+      }
+    }
+
+    function actualizarSalsaModo(index, modo) {
+      if (seleccionesSalsas[index]) {
+        seleccionesSalsas[index].modo = modo;
+        renderizarFilasSalsas();
       }
     }
 
@@ -307,15 +359,17 @@
       productoTemp = null;
     }
 
-    function confirmarAgregarConSalsa() {
+    function confirmarAgregarConSalsas() {
       if (!productoTemp) return;
-      const salsaElegida = document.getElementById('select-salsa-nombre').value;
-      agregarDirectoAlCarrito(productoTemp, salsaElegida, modoPresentacionTemp);
+      agregarDirectoAlCarrito(productoTemp, seleccionesSalsas);
       cerrarModalSalsas();
     }
 
-    function agregarDirectoAlCarrito(producto, salsa, modo) {
-      const claveUnica = `${producto.id}_${salsa}_${modo}`;
+    function agregarDirectoAlCarrito(producto, listaSalsas) {
+      // Genera una clave única combinando producto e información exacta de salsas
+      const salsasStr = listaSalsas.map(s => `${s.nombre}(${s.modo})`).join('+');
+      const claveUnica = `${producto.id}_${salsasStr}`;
+
       const itemExistente = carrito.find(item => item.claveUnica === claveUnica);
 
       if (itemExistente) {
@@ -326,8 +380,7 @@
           id: producto.id,
           nombre: producto.nombre,
           precio: parseFloat(producto.precio),
-          salsa: salsa,
-          modo: modo,
+          salsas: listaSalsas,
           cantidad: 1
         });
       }
@@ -371,10 +424,14 @@
             <div class="flex items-center justify-between">
               <div class="flex-1 pr-2">
                 <h4 class="text-xs font-bold text-zinc-100">${item.nombre}</h4>
-                ${item.salsa ? `
-                  <p class="text-[11px] text-red-400 font-semibold flex items-center gap-1 mt-0.5">
-                    🎯 ${item.salsa} <span class="bg-zinc-800 px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-zinc-700">${item.modo}</span>
-                  </p>
+                ${item.salsas && item.salsas.length > 0 ? `
+                  <div class="mt-1 space-y-0.5">
+                    ${item.salsas.map((s, i) => `
+                      <p class="text-[11px] text-red-400 font-semibold flex items-center gap-1">
+                        🎯 S${i+1}: ${s.nombre} <span class="bg-zinc-800 px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-zinc-700">${s.modo}</span>
+                      </p>
+                    `).join('')}
+                  </div>
                 ` : ''}
                 <p class="text-xs text-red-500 font-black mt-1">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
               </div>
@@ -413,8 +470,11 @@
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
       
       const detalleTexto = carrito.map(i => {
-        const especSalsa = i.salsa ? ` (${i.salsa} - ${i.modo})` : '';
-        return `${i.cantidad}x ${i.nombre}${especSalsa}`;
+        let especSalsas = '';
+        if (i.salsas && i.salsas.length > 0) {
+          especSalsas = ' [' + i.salsas.map(s => `${s.nombre} (${s.modo})`).join(', ') + ']';
+        }
+        return `${i.cantidad}x ${i.nombre}${especSalsas}`;
       }).join(' | ');
 
       const datosVenta = {
@@ -434,7 +494,7 @@
         if (respuesta.exito) {
           mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2));
         } else {
-          alert('Error al guardar venta: ' + respuesta.error);
+          alert('Error al guardar la venta: ' + respuesta.error);
         }
       } catch (err) {
         console.error(err);
@@ -457,10 +517,14 @@
             <span>${i.cantidad}x ${i.nombre}</span>
             <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
           </div>
-          ${i.salsa ? `
-            <div class="mt-1 bg-zinc-100 p-1.5 rounded text-xs">
-              <p class="font-bold text-black">SALSA: ${i.salsa.toUpperCase()}</p>
-              <p class="font-black text-red-600 uppercase">PREPARACIÓN: ${i.modo}</p>
+          ${i.salsas && i.salsas.length > 0 ? `
+            <div class="mt-1 bg-zinc-100 p-2 rounded text-xs space-y-1">
+              ${i.salsas.map((s, idx) => `
+                <div class="flex justify-between border-b border-zinc-200/60 pb-0.5 last:border-none">
+                  <span class="font-bold text-black">SALSA ${idx + 1}: ${s.nombre.toUpperCase()}</span>
+                  <span class="font-black text-red-600 uppercase">${s.modo}</span>
+                </div>
+              `).join('')}
             </div>
           ` : ''}
         </div>
@@ -480,4 +544,4 @@
     }
   </script>
 </body>
-</html>
+</html>f
