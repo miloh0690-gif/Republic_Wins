@@ -8,11 +8,67 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Iconos Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tipografía de marca -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #1f2937; }
-    ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-    
+    :root{
+      --bg: #0c0b0a;
+      --surface: #18140f;
+      --surface-2: #221c15;
+      --line: #35291f;
+      --red: #e8332a;
+      --red-dark: #a61e1e;
+      --amber: #f2a93b;
+      --hot: #ff7a1a;
+      --cream: #f5efe4;
+      --muted: #a69a8a;
+    }
+
+    * { font-family: 'Inter', sans-serif; }
+    .font-display { font-family: 'Anton', sans-serif; letter-spacing: 0.03em; }
+    .font-mono-brand { font-family: 'JetBrains Mono', monospace; }
+
+    body { background-color: var(--bg); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #4a3626; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red-dark); }
+
+    /* Textura sutil de fondo tipo parrilla */
+    .grill-texture {
+      background-image:
+        repeating-linear-gradient(135deg, rgba(232,51,42,0.035) 0px, rgba(232,51,42,0.035) 1px, transparent 1px, transparent 26px);
+    }
+
+    .ember-glow { box-shadow: 0 0 0 1px rgba(242,169,59,0.15), 0 12px 30px -12px rgba(232,51,42,0.45); }
+
+    .cat-pill { transition: all .18s ease; }
+    .cat-pill:hover { transform: translateY(-1px); }
+
+    .product-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .product-card:hover { transform: translateY(-3px); border-color: rgba(242,169,59,0.5); box-shadow: 0 16px 32px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(232,51,42,0.25); }
+
+    .brand-input:focus { border-color: var(--amber) !important; box-shadow: 0 0 0 3px rgba(242,169,59,0.15); }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .55; }
+    }
+    .flame-pulse { animation: flicker 1.8s ease-in-out infinite; }
+
+    /* Ticket de cocina estilo recibo, con borde dentado */
+    .receipt-edge-top, .receipt-edge-bottom {
+      height: 12px;
+      width: 100%;
+      background-image: radial-gradient(circle at 8px 0, transparent 8px, #ffffff 8.5px);
+      background-size: 16px 16px;
+      background-repeat: repeat-x;
+    }
+    .receipt-edge-bottom { transform: rotate(180deg); }
+
     /* Formato de impresión para comanda de cocina */
     @media print {
       body * { visibility: hidden; }
@@ -22,93 +78,110 @@
     }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 font-sans h-screen flex flex-col overflow-hidden">
+<body class="bg-[#0c0b0a] text-zinc-100 h-screen flex flex-col overflow-hidden">
 
   <!-- ENCABEZADO PRINCIPAL DE LA APLICACIÓN -->
-  <header class="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex justify-between items-center shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="bg-red-600 text-white font-black px-3 py-1.5 rounded-lg text-lg tracking-wider shadow-lg shadow-red-950">
-        REPUBLIC WINGS
+  <header class="relative bg-gradient-to-r from-[#150c0a] via-[#1a0d0a] to-[#0c0b0a] border-b border-[#3a2418] px-6 py-3 flex justify-between items-center shrink-0 overflow-hidden">
+    <div class="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[#f2a93b] to-transparent opacity-70"></div>
+    <div class="flex items-center gap-3 relative z-10">
+      <div class="flex items-center gap-2 bg-[#0c0b0a] border border-[#3a2418] px-3 py-1.5 rounded-lg ember-glow">
+        <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a] flame-pulse"></i>
+        <span class="font-display text-xl leading-none text-white">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
       </div>
-      <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">POS v3.0 (POS + Analytics Protegido)</span>
+      <span class="text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase">POS v3.0 · Analytics Protegido</span>
     </div>
-    <div class="text-right">
-      <p id="clock" class="text-sm font-mono text-zinc-400">00:00:00</p>
-      <p class="text-xs text-emerald-400 flex items-center justify-end gap-1">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
+    <div class="text-right relative z-10">
+      <p id="clock" class="text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
+      <p class="text-[11px] text-emerald-400 flex items-center justify-end gap-1.5 mt-0.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
       </p>
     </div>
   </header>
 
   <!-- CUERPO DEL POS -->
   <main class="flex-1 flex overflow-hidden">
-    
+
     <!-- SECCIÓN IZQUIERDA: MENÚ / DASHBOARD -->
-    <section class="flex-1 flex flex-col border-r border-zinc-800 bg-zinc-950 overflow-hidden">
-      
+    <section class="flex-1 flex flex-col border-r border-[#2a2019] bg-[#0c0b0a] overflow-hidden grill-texture">
+
       <!-- BARRA DE NAVEGACIÓN Y CATEGORÍAS -->
-      <div id="category-bar" class="p-4 bg-zinc-900/50 border-b border-zinc-800 flex gap-2 overflow-x-auto shrink-0">
+      <div id="category-bar" class="p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0">
         <!-- Renderizado dinámicamente incluyendo el botón RESUMEN -->
       </div>
 
       <!-- VISTA 1: REJILLA DE PRODUCTOS (POS) -->
       <div id="vista-pos" class="flex-1 p-4 overflow-y-auto">
         <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500 gap-3">
-            <div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p>Cargando productos...</p>
+          <div class="col-span-full flex flex-col items-center justify-center py-20 text-[#a69a8a] gap-3">
+            <div class="w-8 h-8 border-4 border-[#e8332a] border-t-transparent rounded-full animate-spin"></div>
+            <p class="font-display tracking-wide text-sm">CARGANDO MENÚ...</p>
           </div>
         </div>
       </div>
 
       <!-- VISTA 2: DASHBOARD DE RESUMEN DE VENTAS (GERENCIAL) -->
       <div id="vista-resumen" class="flex-1 p-6 overflow-y-auto hidden space-y-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-          <div>
-            <h2 class="text-xl font-bold text-white flex items-center gap-2">
-              <i data-lucide="bar-chart-3" class="text-red-500"></i> Resumen Gerencial de Ventas
-            </h2>
-            <p class="text-xs text-zinc-400">Métricas acumuladas de pedidos y facturación</p>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#18140f] p-4 rounded-xl border border-[#2a2019]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-[#f2a93b]/10 border border-[#f2a93b]/30 flex items-center justify-center shrink-0">
+              <i data-lucide="bar-chart-3" class="text-[#f2a93b] w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-display text-2xl text-white tracking-wide leading-none">RESUMEN GERENCIAL</h2>
+              <p class="text-xs text-[#a69a8a] mt-1">Métricas acumuladas de pedidos y facturación</p>
+            </div>
           </div>
-          
+
           <!-- FILTROS TEMPORALES -->
-          <div class="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800">
-            <button onclick="filtrarResumen('HOY')" id="btn-filtro-HOY" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-red-600 text-white">Hoy</button>
-            <button onclick="filtrarResumen('SEMANA')" id="btn-filtro-SEMANA" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-zinc-400 hover:text-white transition">Esta Semana</button>
-            <button onclick="filtrarResumen('MES')" id="btn-filtro-MES" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-zinc-400 hover:text-white transition">Este Mes</button>
+          <div class="flex bg-[#0c0b0a] p-1 rounded-lg border border-[#2a2019]">
+            <button onclick="filtrarResumen('HOY')" id="btn-filtro-HOY" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
+            <button onclick="filtrarResumen('SEMANA')" id="btn-filtro-SEMANA" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
+            <button onclick="filtrarResumen('MES')" id="btn-filtro-MES" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Este Mes</button>
           </div>
         </div>
 
         <!-- TARJETAS DE INDICADORES (KPIs) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800">
-            <p class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Total Facturado</p>
-            <h3 id="kpi-total-ingresos" class="text-3xl font-black text-emerald-400">0.00 Bs</h3>
+          <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f2a93b] to-[#ff7a1a]"></div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider">Total Facturado</p>
+              <div class="w-8 h-8 rounded-lg bg-[#f2a93b]/10 flex items-center justify-center">
+                <i data-lucide="banknote" class="w-4 h-4 text-[#f2a93b]"></i>
+              </div>
+            </div>
+            <h3 id="kpi-total-ingresos" class="font-display text-4xl text-[#f2a93b] tracking-wide">0.00 Bs</h3>
           </div>
-          <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800">
-            <p class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Total Pedidos</p>
-            <h3 id="kpi-total-pedidos" class="text-3xl font-black text-white">0</h3>
+          <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e8332a] to-[#a61e1e]"></div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider">Total Pedidos</p>
+              <div class="w-8 h-8 rounded-lg bg-[#e8332a]/10 flex items-center justify-center">
+                <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i>
+              </div>
+            </div>
+            <h3 id="kpi-total-pedidos" class="font-display text-4xl text-white tracking-wide">0</h3>
           </div>
         </div>
 
         <!-- TABLA DE PRODUCTOS MÁS VENDIDOS Y HISTORIAL -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+
           <!-- TOP PRODUCTOS -->
-          <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex flex-col">
+          <div class="bg-[#18140f] p-4 rounded-xl border border-[#2a2019] flex flex-col">
             <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2">
-              <i data-lucide="flame" class="w-4 h-4 text-red-500"></i> Desglose de Productos Vendidos
+              <i data-lucide="flame" class="w-4 h-4 text-[#e8332a]"></i> Desglose de Productos Vendidos
             </h3>
             <div class="flex-1 overflow-x-auto">
               <table class="w-full text-left text-xs">
-                <thead class="bg-zinc-950 text-zinc-400 uppercase border-b border-zinc-800">
+                <thead class="bg-[#0c0b0a] text-[#a69a8a] uppercase border-b border-[#2a2019]">
                   <tr>
                     <th class="p-2">Producto</th>
                     <th class="p-2 text-center">Unid.</th>
                     <th class="p-2 text-right">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody id="tabla-top-productos" class="divide-y divide-zinc-800">
+                <tbody id="tabla-top-productos" class="divide-y divide-[#2a2019]">
                   <!-- Renderizado dinámico -->
                 </tbody>
               </table>
@@ -116,9 +189,9 @@
           </div>
 
           <!-- HISTORIAL DE PEDIDOS -->
-          <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex flex-col">
+          <div class="bg-[#18140f] p-4 rounded-xl border border-[#2a2019] flex flex-col">
             <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2">
-              <i data-lucide="receipt" class="w-4 h-4 text-red-500"></i> Historial de Ordenes
+              <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i> Historial de Ordenes
             </h3>
             <div class="flex-1 overflow-y-auto max-h-80">
               <div id="lista-historial-pedidos" class="space-y-2">
@@ -132,57 +205,68 @@
     </section>
 
     <!-- SECCIÓN DERECHA: ORDEN Y DATOS DEL CLIENTE -->
-    <section class="w-96 bg-zinc-900 flex flex-col shrink-0">
-      <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/80">
-        <h2 class="font-bold text-lg flex items-center gap-2">
-          <i data-lucide="shopping-cart" class="w-5 h-5 text-red-500"></i> Orden Actual
+    <section class="w-96 bg-[#120f0c] flex flex-col shrink-0 border-l border-[#2a2019]">
+      <div class="p-4 border-b border-[#2a2019] flex justify-between items-center bg-[#18140f]">
+        <h2 class="font-display text-xl text-white flex items-center gap-2 tracking-wide">
+          <span class="w-8 h-8 rounded-lg bg-[#e8332a]/10 border border-[#e8332a]/30 flex items-center justify-center">
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-[#e8332a]"></i>
+          </span> ORDEN ACTUAL
         </h2>
-        <button onclick="vaciarCarrito()" class="text-xs text-zinc-400 hover:text-red-400 transition">
-          Vaciar
+        <button onclick="vaciarCarrito()" class="text-xs text-[#a69a8a] hover:text-[#e8332a] transition flex items-center gap-1">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Vaciar
         </button>
       </div>
 
       <!-- DATOS DEL CLIENTE -->
-      <div class="p-3 bg-zinc-950/60 border-b border-zinc-800 space-y-2">
+      <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2">
         <div>
-          <label class="block text-[11px] font-bold text-zinc-400 mb-1">NOMBRE / APELLIDO DEL CLIENTE</label>
-          <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" oninput="validarFormularioVenta()" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-red-500">
+          <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NOMBRE / APELLIDO DEL CLIENTE</label>
+          <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-zinc-400 mb-1">NÚMERO DE CELULAR</label>
-          <input type="tel" id="cliente-celular" placeholder="Ej: 71234567" oninput="validarFormularioVenta()" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-red-500">
+          <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NÚMERO DE CELULAR</label>
+          <input type="tel" id="cliente-celular" placeholder="Ej: 71234567" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
         </div>
       </div>
 
       <!-- DETALLE DE ELEMENTOS EN EL CARRITO -->
       <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="text-center text-zinc-500 py-12 text-sm">No hay productos en la orden</div>
+        <div class="text-center text-[#6b5f52] py-12 text-sm flex flex-col items-center gap-2">
+          <i data-lucide="utensils-crossed" class="w-8 h-8 opacity-40"></i>
+          No hay productos en la orden
+        </div>
       </div>
 
       <!-- PANEL DE TOTALES Y MÉTODOS DE PAGO -->
-      <div class="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
+      <div class="p-4 border-t border-[#2a2019] bg-[#0c0b0a] space-y-3">
         <div class="space-y-1 text-sm">
-          <div class="flex justify-between text-zinc-400">
+          <div class="flex justify-between text-[#a69a8a]">
             <span>Subtotal</span>
             <span id="cart-subtotal">0.00 Bs</span>
           </div>
-          <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-zinc-800">
-            <span>Total a Cobrar</span>
-            <span id="cart-total" class="text-red-500">0.00 Bs</span>
+          <div class="flex justify-between items-baseline pt-2 border-t border-[#2a2019]">
+            <span class="text-sm font-bold text-zinc-300 uppercase tracking-wide">Total a Cobrar</span>
+            <span id="cart-total" class="font-display text-2xl text-[#e8332a]">0.00 Bs</span>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">MÉTODO DE PAGO</label>
+          <label class="block text-xs font-semibold text-[#a69a8a] mb-1 tracking-wide">MÉTODO DE PAGO</label>
           <div class="grid grid-cols-3 gap-2">
-            <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Efectivo</button>
-            <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">Tarjeta</button>
-            <button onclick="seleccionarPago('QR')" id="btn-pago-QR" class="pago-btn bg-zinc-800 border border-zinc-700 py-2 rounded text-xs font-semibold hover:border-red-500 transition">QR / Transfer</button>
+            <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1">
+              <i data-lucide="banknote" class="w-3.5 h-3.5"></i> Efectivo
+            </button>
+            <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Tarjeta
+            </button>
+            <button onclick="seleccionarPago('QR')" id="btn-pago-QR" class="pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1">
+              <i data-lucide="qr-code" class="w-3.5 h-3.5"></i> QR / Transfer
+            </button>
           </div>
         </div>
 
-        <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed">
-          ENVIAR A COCINA Y REGISTRAR
+        <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-[#18140f] text-[#6b5f52] font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed border border-[#2a2019]">
+          <i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR
         </button>
       </div>
     </section>
@@ -190,79 +274,87 @@
 
   <!-- MODAL DE AUTENTICACIÓN (CONTRASEÑA DE GERENTE) -->
   <div id="modal-auth" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-zinc-900 border border-zinc-700 text-zinc-100 p-6 rounded-xl max-w-xs w-full shadow-2xl text-center space-y-4">
-      <div class="w-12 h-12 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-500/30">
+    <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-6 rounded-2xl max-w-xs w-full shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 bg-[#e8332a]/15 text-[#e8332a] rounded-full flex items-center justify-center mx-auto border border-[#e8332a]/30">
         <i data-lucide="lock" class="w-6 h-6"></i>
       </div>
       <div>
-        <h3 class="font-bold text-lg text-white">Acceso Restringido</h3>
-        <p class="text-xs text-zinc-400">Ingrese la clave de administrador para ver reportes</p>
+        <h3 class="font-display text-xl text-white tracking-wide">ACCESO RESTRINGIDO</h3>
+        <p class="text-xs text-[#a69a8a] mt-1">Ingrese la clave de administrador para ver reportes</p>
       </div>
       <div>
-        <input type="password" id="auth-password" placeholder="Contraseña" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-center text-sm text-white focus:outline-none focus:border-red-500">
-        <p id="auth-error" class="text-xs text-red-500 mt-1 hidden">Contraseña incorrecta</p>
+        <input type="password" id="auth-password" placeholder="Contraseña" class="brand-input w-full bg-[#0c0b0a] border border-[#35291f] rounded-lg px-3 py-2 text-center text-sm text-white focus:outline-none transition">
+        <p id="auth-error" class="text-xs text-[#e8332a] mt-1 hidden">Contraseña incorrecta</p>
       </div>
       <div class="flex gap-2">
-        <button onclick="cerrarAuthModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2 rounded-lg text-xs">Cancelar</button>
-        <button onclick="validarPassword()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-lg text-xs shadow-lg shadow-red-950">Ingresar</button>
+        <button onclick="cerrarAuthModal()" class="flex-1 bg-[#221c15] hover:bg-[#2a2019] text-zinc-300 font-bold py-2 rounded-lg text-xs transition">Cancelar</button>
+        <button onclick="validarPassword()" class="flex-1 bg-[#e8332a] hover:bg-[#c22a22] text-white font-bold py-2 rounded-lg text-xs shadow-lg shadow-[#e8332a]/20 transition">Ingresar</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL MULTI-SALSA Y COMANDA -->
   <div id="modal-salsas" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-zinc-900 border border-zinc-700 text-zinc-100 p-6 rounded-xl max-w-lg w-full shadow-2xl">
-      <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
-        <div>
-          <h3 id="modal-prod-nombre" class="font-bold text-lg text-white">Configurar Producto</h3>
-          <p class="text-xs text-red-400 font-medium">Selección personalizada de salsas</p>
+    <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-6 rounded-2xl max-w-lg w-full shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#2a2019] pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a]"></i>
+          <div>
+            <h3 id="modal-prod-nombre" class="font-display text-lg text-white tracking-wide">Configurar Producto</h3>
+            <p class="text-xs text-[#f2a93b] font-medium">Selección personalizada de salsas</p>
+          </div>
         </div>
-        <button onclick="cerrarModalSalsas()" class="text-zinc-400 hover:text-white">
+        <button onclick="cerrarModalSalsas()" class="text-[#a69a8a] hover:text-white transition">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
       <div class="mb-4">
-        <label class="block text-xs font-semibold text-zinc-400 mb-2">¿CUÁNTAS SALSAS INCLUYE ESTE COMBO?</label>
+        <label class="block text-xs font-semibold text-[#a69a8a] mb-2 tracking-wide">¿CUÁNTAS SALSAS INCLUYE ESTE COMBO?</label>
         <div class="grid grid-cols-4 gap-2">
-          <button type="button" onclick="setCantidadSalsas(1)" id="btn-num-salsas-1" class="num-salsa-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition">1 Salsa</button>
-          <button type="button" onclick="setCantidadSalsas(2)" id="btn-num-salsas-2" class="num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition">2 Salsas</button>
-          <button type="button" onclick="setCantidadSalsas(3)" id="btn-num-salsas-3" class="num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition">3 Salsas</button>
-          <button type="button" onclick="setCantidadSalsas(4)" id="btn-num-salsas-4" class="num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition">4 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(1)" id="btn-num-salsas-1" class="num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition">1 Salsa</button>
+          <button type="button" onclick="setCantidadSalsas(2)" id="btn-num-salsas-2" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">2 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(3)" id="btn-num-salsas-3" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">3 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(4)" id="btn-num-salsas-4" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">4 Salsas</button>
         </div>
       </div>
       <div id="contenedor-filas-salsas" class="space-y-3 max-h-60 overflow-y-auto pr-1 mb-6"></div>
-      <button onclick="confirmarAgregarConSalsas()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-red-950">
-        Agregar Producto a la Orden
+      <button onclick="confirmarAgregarConSalsas()" class="w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-[#e8332a]/20 flex items-center justify-center gap-2">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar Producto a la Orden
       </button>
     </div>
   </div>
 
   <!-- MODAL DE COMANDA -->
   <div id="modal-comanda" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white text-zinc-900 p-6 rounded-xl max-w-sm w-full shadow-2xl" id="ticket-cocina">
-      <div class="text-center border-b pb-3 mb-3">
-        <h2 class="text-2xl font-black tracking-wider">REPUBLIC WINGS</h2>
-        <p class="text-xs font-bold text-zinc-600">*** COMANDA PARA COCINA ***</p>
-        <p id="ticket-id" class="text-xs font-mono mt-1 text-zinc-500">ID: RW-0000</p>
-        <p id="ticket-fecha" class="text-xs text-zinc-500">Fecha: --/--/----</p>
+    <div class="max-w-sm w-full">
+      <div class="receipt-edge-top"></div>
+      <div class="bg-white text-zinc-900 px-6 pt-2 pb-6 shadow-2xl" id="ticket-cocina">
+        <div class="text-center border-b-2 border-dashed border-zinc-300 pb-3 mb-3">
+          <h2 class="font-display text-3xl tracking-wide text-zinc-900">REPUBLIC <span class="text-[#e8332a]">WINGS</span></h2>
+          <p class="text-[11px] font-bold text-zinc-500 tracking-[0.2em] mt-0.5">*** COMANDA PARA COCINA ***</p>
+          <p id="ticket-id" class="text-xs font-mono-brand mt-2 text-zinc-700 font-bold">ID: RW-0000</p>
+          <p id="ticket-fecha" class="text-xs text-zinc-500 font-mono-brand">Fecha: --/--/----</p>
+        </div>
+        <div class="bg-zinc-100 p-2.5 rounded border border-zinc-300 mb-3 text-xs space-y-0.5">
+          <p><span class="font-bold">CLIENTE:</span> <span id="ticket-cliente-nombre" class="font-black uppercase">---</span></p>
+          <p><span class="font-bold">CELULAR:</span> <span id="ticket-cliente-celular" class="font-mono-brand">---</span></p>
+        </div>
+        <div class="space-y-3 mb-4 text-sm font-semibold" id="ticket-detalles"></div>
+        <div class="border-t-2 border-dashed border-zinc-300 pt-3 flex justify-between items-baseline">
+          <span class="text-sm font-bold uppercase tracking-wide">Total:</span>
+          <span id="ticket-total" class="font-display text-2xl text-[#e8332a]">0.00 Bs</span>
+        </div>
+        <p class="text-center text-[10px] text-zinc-400 mt-4 tracking-wide">¡Gracias por su preferencia! 🔥</p>
+        <div class="mt-5 flex gap-2 no-print">
+          <button onclick="imprimirComanda()" class="flex-1 bg-[#e8332a] text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-[#c22a22] transition">
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comanda
+          </button>
+          <button onclick="cerrarComanda()" class="bg-zinc-200 text-zinc-800 font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-zinc-300 transition">
+            Cerrar
+          </button>
+        </div>
       </div>
-      <div class="bg-zinc-100 p-2 rounded border border-zinc-300 mb-3 text-xs space-y-0.5">
-        <p><span class="font-bold">CLIENTE:</span> <span id="ticket-cliente-nombre" class="font-black uppercase">---</span></p>
-        <p><span class="font-bold">CELULAR:</span> <span id="ticket-cliente-celular" class="font-mono">---</span></p>
-      </div>
-      <div class="space-y-3 mb-4 text-sm font-semibold" id="ticket-detalles"></div>
-      <div class="border-t pt-3 flex justify-between text-base font-black">
-        <span>TOTAL:</span>
-        <span id="ticket-total">0.00 Bs</span>
-      </div>
-      <div class="mt-6 flex gap-2 no-print">
-        <button onclick="imprimirComanda()" class="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-red-700">
-          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comanda
-        </button>
-        <button onclick="cerrarComanda()" class="bg-zinc-200 text-zinc-800 font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-zinc-300">
-          Cerrar
-        </button>
-      </div>
+      <div class="receipt-edge-bottom no-print"></div>
     </div>
   </div>
 
@@ -278,6 +370,16 @@
       'ACOMPAÑAMIENTOS',
       'BEBIDAS'
     ];
+
+    // Icono lucide asociado a cada categoría para reforzar la identidad visual
+    const ICONO_CATEGORIA = {
+      'TODOS': 'layout-grid',
+      'ALITAS': 'flame',
+      'FINGERS': 'utensils',
+      'POLLO A LA CANASTA': 'shopping-basket',
+      'ACOMPAÑAMIENTOS': 'salad',
+      'BEBIDAS': 'cup-soda'
+    };
 
     const LISTA_SALSAS = [
       "Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese", 
@@ -328,9 +430,10 @@
       const container = document.getElementById('category-bar');
       let html = ORDEN_CATEGORIAS_OFICIAL.map(cat => {
         const esActiva = (cat === categoriaActiva && !document.getElementById('vista-pos').classList.contains('hidden'));
+        const icono = ICONO_CATEGORIA[cat] || 'circle';
         return `
-          <button onclick="filtrarCategoria('${cat}')" class="cat-btn ${esActiva ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'} px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">
-            ${cat}
+          <button onclick="filtrarCategoria('${cat}')" class="cat-pill ${esActiva ? 'bg-gradient-to-b from-[#e8332a] to-[#b91f1f] text-white border-transparent shadow-lg shadow-[#e8332a]/25' : 'bg-[#18140f] text-zinc-300 border-[#2a2019] hover:border-[#e8332a]/40 hover:text-white'} border px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap flex items-center gap-1.5">
+            <i data-lucide="${icono}" class="w-3.5 h-3.5"></i> ${cat}
           </button>
         `;
       }).join('');
@@ -338,7 +441,8 @@
       // Botón Especial de Resumen Gerencial
       const esResumenActivo = !document.getElementById('vista-resumen').classList.contains('hidden');
       html += `
-        <button onclick="solicitarAccesoResumen()" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition flex items-center gap-1.5 ${esResumenActivo ? 'bg-emerald-600 text-white' : 'bg-zinc-800 text-emerald-400 border border-emerald-900/50 hover:bg-zinc-700'}">
+        <div class="w-px bg-[#2a2019] mx-1 shrink-0"></div>
+        <button onclick="solicitarAccesoResumen()" class="cat-pill px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-1.5 border ${esResumenActivo ? 'bg-gradient-to-b from-[#f2a93b] to-[#c9821e] text-[#1a1208] border-transparent shadow-lg shadow-[#f2a93b]/25' : 'bg-[#18140f] text-[#f2a93b] border-[#f2a93b]/30 hover:bg-[#221c15]'}">
           <i data-lucide="bar-chart-2" class="w-4 h-4"></i> RESUMEN
         </button>
       `;
@@ -397,9 +501,9 @@
       ['HOY', 'SEMANA', 'MES'].forEach(p => {
         const btn = document.getElementById(`btn-filtro-${p}`);
         if (p === periodo) {
-          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-red-600 text-white";
+          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white";
         } else {
-          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-zinc-400 hover:text-white transition";
+          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition";
         }
       });
 
@@ -460,13 +564,13 @@
       const tablaBody = document.getElementById('tabla-top-productos');
       const keys = Object.keys(conteoProductos);
       if (keys.length === 0) {
-        tablaBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-zinc-500">No hay registros en este periodo</td></tr>`;
+        tablaBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-[#6b5f52]">No hay registros en este periodo</td></tr>`;
       } else {
         tablaBody.innerHTML = keys.map(k => `
-          <tr class="hover:bg-zinc-800/50">
+          <tr class="hover:bg-[#221c15] transition">
             <td class="p-2 font-bold text-zinc-200">${k}</td>
-            <td class="p-2 text-center text-zinc-300 font-mono">${conteoProductos[k].cantidad}</td>
-            <td class="p-2 text-right text-emerald-400 font-bold">${conteoProductos[k].subtotal.toFixed(2)} Bs</td>
+            <td class="p-2 text-center text-zinc-300 font-mono-brand">${conteoProductos[k].cantidad}</td>
+            <td class="p-2 text-right text-[#f2a93b] font-bold">${conteoProductos[k].subtotal.toFixed(2)} Bs</td>
           </tr>
         `).join('');
       }
@@ -474,15 +578,15 @@
       // Renderizar Historial
       const historialCont = document.getElementById('lista-historial-pedidos');
       if (ventasFiltradas.length === 0) {
-        historialCont.innerHTML = `<p class="text-center text-zinc-500 text-xs py-4">Sin ordenes</p>`;
+        historialCont.innerHTML = `<p class="text-center text-[#6b5f52] text-xs py-4">Sin ordenes</p>`;
       } else {
         historialCont.innerHTML = ventasFiltradas.map(v => `
-          <div class="bg-zinc-950 p-2.5 rounded-lg border border-zinc-800 text-xs space-y-1">
+          <div class="bg-[#0c0b0a] p-2.5 rounded-lg border border-[#2a2019] text-xs space-y-1">
             <div class="flex justify-between font-bold text-zinc-300">
-              <span>${v.idVenta || 'RW-00'} - ${v.cliente || 'Cliente'}</span>
+              <span class="font-mono-brand text-[#f2a93b]">${v.idVenta || 'RW-00'}</span> <span class="flex-1 px-2 truncate">${v.cliente || 'Cliente'}</span>
               <span class="text-emerald-400">${v.total}</span>
             </div>
-            <p class="text-[11px] text-zinc-500 line-clamp-1">${v.detalle || ''}</p>
+            <p class="text-[11px] text-[#6b5f52] line-clamp-1">${v.detalle || ''}</p>
           </div>
         `).join('');
       }
@@ -501,23 +605,24 @@
         : menuData.filter(p => p.categoria.trim().toUpperCase() === categoria.toUpperCase());
       
       if (filtrados.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500">No hay productos en esta categoría</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-[#6b5f52]">No hay productos en esta categoría</div>`;
         return;
       }
 
       grid.innerHTML = filtrados.map(p => `
-        <div onclick="interceptarSeleccionProducto('${p.id}')" class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-red-600/50 transition cursor-pointer flex flex-col group shadow-lg">
-          <div class="h-32 w-full bg-zinc-800 overflow-hidden relative">
+        <div onclick="interceptarSeleccionProducto('${p.id}')" class="product-card bg-[#18140f] border border-[#2a2019] rounded-xl overflow-hidden cursor-pointer flex flex-col group shadow-lg">
+          <div class="h-32 w-full bg-[#221c15] overflow-hidden relative">
             <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
-            <span class="absolute top-2 right-2 bg-zinc-950/80 backdrop-blur text-xs px-2 py-0.5 rounded text-zinc-300 font-medium border border-zinc-700">
+            <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent"></div>
+            <span class="absolute top-2 right-2 bg-[#0c0b0a]/85 backdrop-blur text-[10px] px-2 py-0.5 rounded text-[#f2a93b] font-bold border border-[#f2a93b]/25 uppercase tracking-wide">
               ${p.categoria}
             </span>
           </div>
           <div class="p-3 flex-1 flex flex-col justify-between">
             <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${p.nombre}</h3>
             <div class="mt-2 flex justify-between items-center">
-              <span class="text-red-500 font-black text-base">${p.precio} Bs</span>
-              <span class="bg-red-600/10 text-red-500 p-1.5 rounded-lg group-hover:bg-red-600 group-hover:text-white transition">
+              <span class="font-display text-lg text-[#e8332a] tracking-wide">${p.precio} Bs</span>
+              <span class="bg-[#e8332a]/10 text-[#e8332a] p-1.5 rounded-lg group-hover:bg-[#e8332a] group-hover:text-white transition">
                 <i data-lucide="plus" class="w-4 h-4"></i>
               </span>
             </div>
@@ -550,8 +655,8 @@
       [1, 2, 3, 4].forEach(i => {
         const btn = document.getElementById(`btn-num-salsas-${i}`);
         btn.className = (i === num) 
-          ? "num-salsa-btn bg-red-600 text-white font-bold py-2 rounded-lg text-xs transition"
-          : "num-salsa-btn bg-zinc-800 text-zinc-300 font-bold py-2 rounded-lg text-xs hover:bg-zinc-700 transition";
+          ? "num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition"
+          : "num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition";
       });
 
       seleccionesSalsas = [];
@@ -564,17 +669,17 @@
     function renderizarFilasSalsas() {
       const contenedor = document.getElementById('contenedor-filas-salsas');
       contenedor.innerHTML = seleccionesSalsas.map((item, idx) => `
-        <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
-          <span class="text-xs font-bold text-red-500 uppercase tracking-wider">Salsa #${idx + 1}</span>
+        <div class="bg-[#0c0b0a] p-3 rounded-lg border border-[#2a2019] space-y-2">
+          <span class="text-xs font-bold text-[#e8332a] uppercase tracking-wider">Salsa #${idx + 1}</span>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
-              <select onchange="actualizarSalsaSabor(${idx}, this.value)" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-red-500">
+              <select onchange="actualizarSalsaSabor(${idx}, this.value)" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg p-2 text-xs text-white focus:outline-none transition">
                 ${LISTA_SALSAS.map(s => `<option value="${s}" ${s === item.nombre ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
             </div>
             <div class="grid grid-cols-2 gap-1">
-              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Bañadas')" class="py-1.5 rounded text-[11px] font-bold ${item.modo === 'Bañadas' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}">Bañadas</button>
-              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Salsa Aparte')" class="py-1.5 rounded text-[11px] font-bold ${item.modo === 'Salsa Aparte' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}">Aparte</button>
+              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Bañadas')" class="py-1.5 rounded text-[11px] font-bold transition ${item.modo === 'Bañadas' ? 'bg-[#e8332a] text-white' : 'bg-[#18140f] border border-[#35291f] text-zinc-400 hover:border-[#e8332a]/50'}">Bañadas</button>
+              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Salsa Aparte')" class="py-1.5 rounded text-[11px] font-bold transition ${item.modo === 'Salsa Aparte' ? 'bg-[#e8332a] text-white' : 'bg-[#18140f] border border-[#35291f] text-zinc-400 hover:border-[#e8332a]/50'}">Aparte</button>
             </div>
           </div>
         </div>
@@ -635,16 +740,21 @@
       metodoPagoSeleccionado = '';
       document.getElementById('cliente-nombre').value = '';
       document.getElementById('cliente-celular').value = '';
+      document.querySelectorAll('.pago-btn').forEach(btn => {
+        btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1";
+      });
+      lucide.createIcons();
       actualizarCarritoUI();
     }
 
     function seleccionarPago(metodo) {
       metodoPagoSeleccionado = metodo;
       document.querySelectorAll('.pago-btn').forEach(btn => {
-        btn.classList.remove('border-red-600', 'bg-red-600/20', 'text-red-400');
+        btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1";
       });
       const btnActivo = document.getElementById(`btn-pago-${metodo}`);
-      if (btnActivo) btnActivo.classList.add('border-red-600', 'bg-red-600/20', 'text-red-400');
+      if (btnActivo) btnActivo.className = "pago-btn bg-gradient-to-b from-[#f2a93b] to-[#c9821e] border border-transparent py-2 rounded-lg text-xs font-bold text-[#1a1208] transition flex flex-col items-center gap-1 shadow-lg shadow-[#f2a93b]/20";
+      lucide.createIcons();
       validarFormularioVenta();
     }
 
@@ -655,35 +765,40 @@
       
       btnCompletar.disabled = !esValido;
       btnCompletar.className = esValido
-        ? "w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-red-950 cursor-pointer"
-        : "w-full bg-zinc-800 text-zinc-500 font-bold py-3.5 rounded-lg text-sm tracking-wide transition cursor-not-allowed";
+        ? "w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-[#e8332a]/30 flex items-center justify-center gap-2 cursor-pointer border border-transparent"
+        : "w-full bg-[#18140f] text-[#6b5f52] font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed border border-[#2a2019]";
+      btnCompletar.innerHTML = esValido
+        ? '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR'
+        : '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR';
+      lucide.createIcons();
     }
 
     function actualizarCarritoUI() {
       const container = document.getElementById('cart-items');
       if (carrito.length === 0) {
-        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-sm">No hay productos en la orden</div>`;
+        container.innerHTML = `<div class="text-center text-[#6b5f52] py-12 text-sm flex flex-col items-center gap-2"><i data-lucide="utensils-crossed" class="w-8 h-8 opacity-40"></i>No hay productos en la orden</div>`;
+        lucide.createIcons();
       } else {
         container.innerHTML = carrito.map((item, idx) => `
-          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-1">
+          <div class="bg-[#0c0b0a] p-3 rounded-lg border border-[#2a2019] space-y-1">
             <div class="flex items-center justify-between">
               <div class="flex-1 pr-2">
                 <h4 class="text-xs font-bold text-zinc-100">${item.nombre}</h4>
                 ${item.salsas && item.salsas.length > 0 ? `
                   <div class="mt-1 space-y-0.5">
                     ${item.salsas.map((s, i) => `
-                      <p class="text-[11px] text-red-400 font-semibold flex items-center gap-1">
-                        🎯 S${i+1}: ${s.nombre} <span class="bg-zinc-800 px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-zinc-700">${s.modo}</span>
+                      <p class="text-[11px] text-[#f2a93b] font-semibold flex items-center gap-1">
+                        🎯 S${i+1}: ${s.nombre} <span class="bg-[#18140f] px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-[#35291f]">${s.modo}</span>
                       </p>
                     `).join('')}
                   </div>
                 ` : ''}
-                <p class="text-xs text-red-500 font-black mt-1">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
+                <p class="text-xs text-[#e8332a] font-black mt-1">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
               </div>
-              <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded px-2 py-1">
-                <button onclick="cambiarCantidad(${idx}, -1)" class="text-zinc-400 hover:text-white font-bold text-xs">-</button>
+              <div class="flex items-center gap-2 bg-[#18140f] border border-[#2a2019] rounded px-2 py-1">
+                <button onclick="cambiarCantidad(${idx}, -1)" class="text-zinc-400 hover:text-white font-bold text-xs w-4">-</button>
                 <span class="text-xs font-bold w-4 text-center text-white">${item.cantidad}</span>
-                <button onclick="cambiarCantidad(${idx}, 1)" class="text-zinc-400 hover:text-white font-bold text-xs">+</button>
+                <button onclick="cambiarCantidad(${idx}, 1)" class="text-zinc-400 hover:text-white font-bold text-xs w-4">+</button>
               </div>
             </div>
           </div>
@@ -703,7 +818,8 @@
 
       const btnCompletar = document.getElementById('btn-completar');
       btnCompletar.disabled = true;
-      btnCompletar.innerText = "REGISTRANDO VENTA...";
+      btnCompletar.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> REGISTRANDO VENTA...';
+      lucide.createIcons();
 
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
       
@@ -738,7 +854,7 @@
         console.error(err);
         alert('Error de conexión con Google Sheets.');
       } finally {
-        btnCompletar.innerText = "ENVIAR A COCINA Y REGISTRAR";
+        validarFormularioVenta();
       }
     }
 
@@ -751,7 +867,7 @@
 
       const detallesContainer = document.getElementById('ticket-detalles');
       detallesContainer.innerHTML = carrito.map(i => `
-        <div class="border-b border-zinc-200 pb-2">
+        <div class="border-b border-dashed border-zinc-300 pb-2">
           <div class="flex justify-between items-start font-black text-base">
             <span>${i.cantidad}x ${i.nombre}</span>
             <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
@@ -761,7 +877,7 @@
               ${i.salsas.map((s, idx) => `
                 <div class="flex justify-between border-b border-zinc-200/60 pb-0.5 last:border-none">
                   <span class="font-bold text-black">SALSA ${idx + 1}: ${s.nombre.toUpperCase()}</span>
-                  <span class="font-black text-red-600 uppercase">${s.modo}</span>
+                  <span class="font-black text-[#e8332a] uppercase">${s.modo}</span>
                 </div>
               `).join('')}
             </div>
