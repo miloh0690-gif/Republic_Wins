@@ -88,7 +88,7 @@
         <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a] flame-pulse"></i>
         <span class="font-display text-xl leading-none text-white">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
       </div>
-      <span class="text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase">POS v3.0 · Analytics Protegido</span>
+      <span class="text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase">POS v3.1 · Seguridad Reforzada</span>
     </div>
     <div class="text-right relative z-10">
       <p id="clock" class="text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
@@ -132,11 +132,16 @@
             </div>
           </div>
 
-          <!-- FILTROS TEMPORALES -->
-          <div class="flex bg-[#0c0b0a] p-1 rounded-lg border border-[#2a2019]">
-            <button onclick="filtrarResumen('HOY')" id="btn-filtro-HOY" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
-            <button onclick="filtrarResumen('SEMANA')" id="btn-filtro-SEMANA" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
-            <button onclick="filtrarResumen('MES')" id="btn-filtro-MES" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Este Mes</button>
+          <div class="flex items-center gap-3">
+            <!-- FILTROS TEMPORALES -->
+            <div class="flex bg-[#0c0b0a] p-1 rounded-lg border border-[#2a2019]">
+              <button onclick="filtrarResumen('HOY')" id="btn-filtro-HOY" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
+              <button onclick="filtrarResumen('SEMANA')" id="btn-filtro-SEMANA" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
+              <button onclick="filtrarResumen('MES')" id="btn-filtro-MES" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Este Mes</button>
+            </div>
+            <button onclick="cerrarSesionAdmin()" class="text-xs text-[#a69a8a] hover:text-[#e8332a] transition flex items-center gap-1 border border-[#2a2019] px-3 py-1.5 rounded-lg">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Cerrar sesión
+            </button>
           </div>
         </div>
 
@@ -221,11 +226,11 @@
       <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2">
         <div>
           <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NOMBRE / APELLIDO DEL CLIENTE</label>
-          <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
+          <input type="text" id="cliente-nombre" maxlength="80" placeholder="Ej: Juan Pérez" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NÚMERO DE CELULAR</label>
-          <input type="tel" id="cliente-celular" placeholder="Ej: 71234567" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
+          <input type="tel" id="cliente-celular" maxlength="20" placeholder="Ej: 71234567" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
         </div>
       </div>
 
@@ -248,6 +253,7 @@
             <span class="text-sm font-bold text-zinc-300 uppercase tracking-wide">Total a Cobrar</span>
             <span id="cart-total" class="font-display text-2xl text-[#e8332a]">0.00 Bs</span>
           </div>
+          <p class="text-[10px] text-[#6b5f52]">* El total final es verificado y confirmado por el servidor.</p>
         </div>
 
         <div>
@@ -283,12 +289,12 @@
         <p class="text-xs text-[#a69a8a] mt-1">Ingrese la clave de administrador para ver reportes</p>
       </div>
       <div>
-        <input type="password" id="auth-password" placeholder="Contraseña" class="brand-input w-full bg-[#0c0b0a] border border-[#35291f] rounded-lg px-3 py-2 text-center text-sm text-white focus:outline-none transition">
+        <input type="password" id="auth-password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')validarPassword()" class="brand-input w-full bg-[#0c0b0a] border border-[#35291f] rounded-lg px-3 py-2 text-center text-sm text-white focus:outline-none transition">
         <p id="auth-error" class="text-xs text-[#e8332a] mt-1 hidden">Contraseña incorrecta</p>
       </div>
       <div class="flex gap-2">
         <button onclick="cerrarAuthModal()" class="flex-1 bg-[#221c15] hover:bg-[#2a2019] text-zinc-300 font-bold py-2 rounded-lg text-xs transition">Cancelar</button>
-        <button onclick="validarPassword()" class="flex-1 bg-[#e8332a] hover:bg-[#c22a22] text-white font-bold py-2 rounded-lg text-xs shadow-lg shadow-[#e8332a]/20 transition">Ingresar</button>
+        <button id="btn-validar-password" onclick="validarPassword()" class="flex-1 bg-[#e8332a] hover:bg-[#c22a22] text-white font-bold py-2 rounded-lg text-xs shadow-lg shadow-[#e8332a]/20 transition">Ingresar</button>
       </div>
     </div>
   </div>
@@ -360,7 +366,7 @@
 
   <script>
     // ⚠️ REEMPLAZA CON TU URL OFICIAL DE GOOGLE APPS SCRIPT
-    const API_URL = 'https://script.google.com/macros/s/AKfycbw7gFClXsf6XkXOeA9I8CQnYTdkZXB7npARywTbMFzfu-_FpWh5WYkftSQX0swBiWj8/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwx73-WYvOFrfH6IjC2OTeHzKoYEZdqMaTxHDRDxvifiXkXPs6LD8b_RI1a8m2f7f2XQQ/exec';
 
     const ORDEN_CATEGORIAS_OFICIAL = [
       'TODOS',
@@ -382,14 +388,48 @@
     };
 
     const LISTA_SALSAS = [
-      "Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese", 
-      "Albahaca y Hierbas", "Hot Republic 🔥", "Bufallo Wild 🔥", 
+      "Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese",
+      "Albahaca y Hierbas", "Hot Republic 🔥", "Bufallo Wild 🔥",
       "Extra Hot Republic (Bañado) 🔥🔥", "Ajo Parmesano (Bañado)", "Lemon Pepper (Bañado)"
     ];
 
-    // CONFIGURACIÓN DE SEGURIDAD
-    const CONTRASEÑA_ADMIN = "admin123"; // 🔐 CAMBIA AQUÍ TU CONTRASEÑA DE GERENTE
-    let estaAutenticado = false;
+    // ============================================================
+    // SEGURIDAD: ya NO hay contraseña ni bandera de autenticación
+    // guardadas en el frontend. Todo lo valida el backend (Code.gs)
+    // y solo se guarda un TOKEN temporal, con vencimiento, emitido
+    // por el servidor tras validar la clave.
+    // ============================================================
+    let tokenAdmin = sessionStorage.getItem('rw_admin_token') || null;
+    let tokenAdminExpira = parseInt(sessionStorage.getItem('rw_admin_token_exp') || '0', 10);
+
+    function sesionAdminValida() {
+      return !!tokenAdmin && Date.now() < tokenAdminExpira;
+    }
+
+    function guardarSesionAdmin(token, expiraSegundos) {
+      tokenAdmin = token;
+      tokenAdminExpira = Date.now() + (expiraSegundos || 1800) * 1000;
+      sessionStorage.setItem('rw_admin_token', tokenAdmin);
+      sessionStorage.setItem('rw_admin_token_exp', String(tokenAdminExpira));
+    }
+
+    function cerrarSesionAdmin() {
+      tokenAdmin = null;
+      tokenAdminExpira = 0;
+      sessionStorage.removeItem('rw_admin_token');
+      sessionStorage.removeItem('rw_admin_token_exp');
+      filtrarCategoria('TODOS');
+    }
+
+    // Escapa cualquier texto antes de insertarlo con innerHTML,
+    // para que nombres/celulares/datos guardados en la planilla
+    // no puedan ejecutar código en la pantalla del POS (XSS).
+    function escapeHTML(valor) {
+      if (valor === null || valor === undefined) return '';
+      return String(valor).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
 
     let menuData = [];
     let ventasData = [];
@@ -397,7 +437,7 @@
     let metodoPagoSeleccionado = '';
     let categoriaActiva = 'TODOS';
     let filtroResumenActivo = 'HOY';
-    
+
     let productoTemp = null;
     let cantidadSalsasTemp = 1;
     let seleccionesSalsas = [];
@@ -452,12 +492,13 @@
     }
 
     function solicitarAccesoResumen() {
-      if (estaAutenticado) {
+      if (sesionAdminValida()) {
         mostrarVistaResumen();
       } else {
         document.getElementById('auth-password').value = '';
         document.getElementById('auth-error').classList.add('hidden');
         document.getElementById('modal-auth').classList.remove('hidden');
+        document.getElementById('auth-password').focus();
       }
     }
 
@@ -465,14 +506,37 @@
       document.getElementById('modal-auth').classList.add('hidden');
     }
 
-    function validarPassword() {
+    // La validación real ocurre en el servidor (Code.gs). El frontend
+    // solo envía la contraseña por POST y espera un token de vuelta;
+    // nunca decide por sí mismo si el acceso está permitido.
+    async function validarPassword() {
       const pass = document.getElementById('auth-password').value;
-      if (pass === CONTRASEÑA_ADMIN) {
-        estaAutenticado = true;
-        cerrarAuthModal();
-        mostrarVistaResumen();
-      } else {
+      const btn = document.getElementById('btn-validar-password');
+      if (!pass) return;
+
+      btn.disabled = true;
+      btn.innerText = 'Verificando...';
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ accion: 'login', password: pass })
+        });
+        const data = await response.json();
+
+        if (data.exito && data.token) {
+          guardarSesionAdmin(data.token, data.expiraSegundos);
+          cerrarAuthModal();
+          mostrarVistaResumen();
+        } else {
+          document.getElementById('auth-error').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Error al validar acceso:', err);
         document.getElementById('auth-error').classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Ingresar';
       }
     }
 
@@ -483,10 +547,26 @@
       await cargarVentas();
     }
 
+    // getVentas ahora exige el token de sesión. Si el servidor lo
+    // rechaza (vencido, inválido o ausente), se cierra la sesión
+    // local y se vuelve a pedir la contraseña.
     async function cargarVentas() {
+      if (!sesionAdminValida()) {
+        cerrarSesionAdmin();
+        solicitarAccesoResumen();
+        return;
+      }
       try {
-        const response = await fetch(`${API_URL}?action=getVentas`);
+        const response = await fetch(`${API_URL}?action=getVentas&token=${encodeURIComponent(tokenAdmin)}`);
         const data = await response.json();
+
+        if (data && data.error === 'NO_AUTORIZADO') {
+          cerrarSesionAdmin();
+          alert('Tu sesión de administrador venció. Ingresá la clave nuevamente.');
+          solicitarAccesoResumen();
+          return;
+        }
+
         ventasData = Array.isArray(data) ? data : [];
         filtrarResumen(filtroResumenActivo);
       } catch (err) {
@@ -496,7 +576,7 @@
 
     function filtrarResumen(periodo) {
       filtroResumenActivo = periodo;
-      
+
       // Actualizar estilos de botones
       ['HOY', 'SEMANA', 'MES'].forEach(p => {
         const btn = document.getElementById(`btn-filtro-${p}`);
@@ -508,11 +588,11 @@
       });
 
       const ahora = new Date();
-      
+
       const ventasFiltradas = ventasData.filter(v => {
         if (!v.fecha) return false;
         const fechaVenta = new Date(v.fecha);
-        
+
         if (periodo === 'HOY') {
           return fechaVenta.toDateString() === ahora.toDateString();
         } else if (periodo === 'SEMANA') {
@@ -525,7 +605,7 @@
         return true;
       });
 
-      // Calcular KPIs
+      // Calcular KPIs (el total ya viene calculado y verificado por el servidor)
       const totalIngresos = ventasFiltradas.reduce((sum, v) => {
         const monto = parseFloat(v.total.toString().replace(' Bs', '')) || 0;
         return sum + monto;
@@ -540,13 +620,11 @@
         if (v.detalle) {
           const items = v.detalle.split(' | ');
           items.forEach(itemStr => {
-            // Ejemplo: "2x Alitas (6 pcs) [Miel y Mostaza (Bañadas)]"
             const match = itemStr.match(/^(\d+)x\s+([^\[]+)/);
             if (match) {
               const cant = parseInt(match[1]);
               const prodNombre = match[2].trim();
-              
-              // Buscar precio base del producto
+
               const prodObj = menuData.find(m => m.nombre.trim() === prodNombre);
               const precioUni = prodObj ? parseFloat(prodObj.precio) : 0;
 
@@ -560,7 +638,7 @@
         }
       });
 
-      // Renderizar Tabla
+      // Renderizar Tabla (nombres escapados por si vienen de fuera del sistema)
       const tablaBody = document.getElementById('tabla-top-productos');
       const keys = Object.keys(conteoProductos);
       if (keys.length === 0) {
@@ -568,14 +646,16 @@
       } else {
         tablaBody.innerHTML = keys.map(k => `
           <tr class="hover:bg-[#221c15] transition">
-            <td class="p-2 font-bold text-zinc-200">${k}</td>
+            <td class="p-2 font-bold text-zinc-200">${escapeHTML(k)}</td>
             <td class="p-2 text-center text-zinc-300 font-mono-brand">${conteoProductos[k].cantidad}</td>
             <td class="p-2 text-right text-[#f2a93b] font-bold">${conteoProductos[k].subtotal.toFixed(2)} Bs</td>
           </tr>
         `).join('');
       }
 
-      // Renderizar Historial
+      // Renderizar Historial (todo lo que viene de la planilla se escapa:
+      // idVenta, cliente y detalle pueden haber sido escritos por un
+      // cliente en el campo "nombre" y no son de confianza)
       const historialCont = document.getElementById('lista-historial-pedidos');
       if (ventasFiltradas.length === 0) {
         historialCont.innerHTML = `<p class="text-center text-[#6b5f52] text-xs py-4">Sin ordenes</p>`;
@@ -583,10 +663,10 @@
         historialCont.innerHTML = ventasFiltradas.map(v => `
           <div class="bg-[#0c0b0a] p-2.5 rounded-lg border border-[#2a2019] text-xs space-y-1">
             <div class="flex justify-between font-bold text-zinc-300">
-              <span class="font-mono-brand text-[#f2a93b]">${v.idVenta || 'RW-00'}</span> <span class="flex-1 px-2 truncate">${v.cliente || 'Cliente'}</span>
-              <span class="text-emerald-400">${v.total}</span>
+              <span class="font-mono-brand text-[#f2a93b]">${escapeHTML(v.idVenta || 'RW-00')}</span> <span class="flex-1 px-2 truncate">${escapeHTML(v.cliente || 'Cliente')}</span>
+              <span class="text-emerald-400">${escapeHTML(v.total)}</span>
             </div>
-            <p class="text-[11px] text-[#6b5f52] line-clamp-1">${v.detalle || ''}</p>
+            <p class="text-[11px] text-[#6b5f52] line-clamp-1">${escapeHTML(v.detalle || '')}</p>
           </div>
         `).join('');
       }
@@ -600,10 +680,10 @@
       renderizarCategorias();
 
       const grid = document.getElementById('products-grid');
-      const filtrados = categoria === 'TODOS' 
-        ? menuData 
+      const filtrados = categoria === 'TODOS'
+        ? menuData
         : menuData.filter(p => p.categoria.trim().toUpperCase() === categoria.toUpperCase());
-      
+
       if (filtrados.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-12 text-[#6b5f52]">No hay productos en esta categoría</div>`;
         return;
@@ -612,14 +692,14 @@
       grid.innerHTML = filtrados.map(p => `
         <div onclick="interceptarSeleccionProducto('${p.id}')" class="product-card bg-[#18140f] border border-[#2a2019] rounded-xl overflow-hidden cursor-pointer flex flex-col group shadow-lg">
           <div class="h-32 w-full bg-[#221c15] overflow-hidden relative">
-            <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
+            <img src="${p.imagenUrl}" alt="${escapeHTML(p.nombre)}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
             <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent"></div>
             <span class="absolute top-2 right-2 bg-[#0c0b0a]/85 backdrop-blur text-[10px] px-2 py-0.5 rounded text-[#f2a93b] font-bold border border-[#f2a93b]/25 uppercase tracking-wide">
-              ${p.categoria}
+              ${escapeHTML(p.categoria)}
             </span>
           </div>
           <div class="p-3 flex-1 flex flex-col justify-between">
-            <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${p.nombre}</h3>
+            <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${escapeHTML(p.nombre)}</h3>
             <div class="mt-2 flex justify-between items-center">
               <span class="font-display text-lg text-[#e8332a] tracking-wide">${p.precio} Bs</span>
               <span class="bg-[#e8332a]/10 text-[#e8332a] p-1.5 rounded-lg group-hover:bg-[#e8332a] group-hover:text-white transition">
@@ -629,7 +709,7 @@
           </div>
         </div>
       `).join('');
-      
+
       lucide.createIcons();
     }
 
@@ -654,7 +734,7 @@
       cantidadSalsasTemp = num;
       [1, 2, 3, 4].forEach(i => {
         const btn = document.getElementById(`btn-num-salsas-${i}`);
-        btn.className = (i === num) 
+        btn.className = (i === num)
           ? "num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition"
           : "num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition";
       });
@@ -762,7 +842,7 @@
       const btnCompletar = document.getElementById('btn-completar');
       const nombreCliente = document.getElementById('cliente-nombre').value.trim();
       const esValido = carrito.length > 0 && metodoPagoSeleccionado !== '' && nombreCliente !== '';
-      
+
       btnCompletar.disabled = !esValido;
       btnCompletar.className = esValido
         ? "w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-[#e8332a]/30 flex items-center justify-center gap-2 cursor-pointer border border-transparent"
@@ -783,12 +863,12 @@
           <div class="bg-[#0c0b0a] p-3 rounded-lg border border-[#2a2019] space-y-1">
             <div class="flex items-center justify-between">
               <div class="flex-1 pr-2">
-                <h4 class="text-xs font-bold text-zinc-100">${item.nombre}</h4>
+                <h4 class="text-xs font-bold text-zinc-100">${escapeHTML(item.nombre)}</h4>
                 ${item.salsas && item.salsas.length > 0 ? `
                   <div class="mt-1 space-y-0.5">
                     ${item.salsas.map((s, i) => `
                       <p class="text-[11px] text-[#f2a93b] font-semibold flex items-center gap-1">
-                        🎯 S${i+1}: ${s.nombre} <span class="bg-[#18140f] px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-[#35291f]">${s.modo}</span>
+                        🎯 S${i+1}: ${escapeHTML(s.nombre)} <span class="bg-[#18140f] px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-[#35291f]">${escapeHTML(s.modo)}</span>
                       </p>
                     `).join('')}
                   </div>
@@ -805,6 +885,9 @@
         `).join('');
       }
 
+      // Este total es solo una vista previa para el mesero. El total que
+      // realmente se cobra y se guarda lo recalcula el servidor a partir
+      // de los IDs y cantidades, ignorando cualquier número que mande el navegador.
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
       document.getElementById('cart-subtotal').innerText = `${total.toFixed(2)} Bs`;
       document.getElementById('cart-total').innerText = `${total.toFixed(2)} Bs`;
@@ -821,8 +904,6 @@
       btnCompletar.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> REGISTRANDO VENTA...';
       lucide.createIcons();
 
-      const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-      
       const detalleTexto = carrito.map(i => {
         let especSalsas = '';
         if (i.salsas && i.salsas.length > 0) {
@@ -831,11 +912,21 @@
         return `${i.cantidad}x ${i.nombre}${especSalsas}`;
       }).join(' | ');
 
+      // Solo mandamos IDs y cantidades: el precio y el total definitivos
+      // los calcula el Apps Script comparando contra su propia hoja de Menú.
+      const itemsPayload = carrito.map(i => ({
+        id: i.id,
+        cantidad: i.cantidad,
+        salsas: (i.salsas || []).map(s => ({ nombre: s.nombre, modo: s.modo }))
+      }));
+
       const datosVenta = {
-        total: total.toFixed(2) + ' Bs',
+        accion: 'registrarVenta',
         metodoPago: metodoPagoSeleccionado,
-        cliente: `${nombreCliente} (Cel: ${celularCliente || 'N/A'})`,
-        detalleJson: detalleTexto
+        clienteNombre: nombreCliente,
+        clienteCelular: celularCliente || 'N/A',
+        items: itemsPayload,
+        detalleTexto: detalleTexto
       };
 
       try {
@@ -844,11 +935,12 @@
           body: JSON.stringify(datosVenta)
         });
         const respuesta = await response.json();
-        
+
         if (respuesta.exito) {
-          mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2), nombreCliente, celularCliente);
+          // Usamos el total que confirma el servidor, no el calculado en el navegador
+          mostrarComandaCocinaModal(respuesta.idVenta, respuesta.totalConfirmado, nombreCliente, celularCliente);
         } else {
-          alert('Error al guardar la venta: ' + respuesta.error);
+          alert('Error al guardar la venta: ' + (respuesta.error || 'desconocido'));
         }
       } catch (err) {
         console.error(err);
@@ -869,15 +961,15 @@
       detallesContainer.innerHTML = carrito.map(i => `
         <div class="border-b border-dashed border-zinc-300 pb-2">
           <div class="flex justify-between items-start font-black text-base">
-            <span>${i.cantidad}x ${i.nombre}</span>
+            <span>${escapeHTML(i.cantidad + 'x ' + i.nombre)}</span>
             <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
           </div>
           ${i.salsas && i.salsas.length > 0 ? `
             <div class="mt-1 bg-zinc-100 p-2 rounded text-xs space-y-1">
               ${i.salsas.map((s, idx) => `
                 <div class="flex justify-between border-b border-zinc-200/60 pb-0.5 last:border-none">
-                  <span class="font-bold text-black">SALSA ${idx + 1}: ${s.nombre.toUpperCase()}</span>
-                  <span class="font-black text-[#e8332a] uppercase">${s.modo}</span>
+                  <span class="font-bold text-black">SALSA ${idx + 1}: ${escapeHTML(s.nombre.toUpperCase())}</span>
+                  <span class="font-black text-[#e8332a] uppercase">${escapeHTML(s.modo)}</span>
                 </div>
               `).join('')}
             </div>
