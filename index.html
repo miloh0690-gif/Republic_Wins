@@ -76,23 +76,67 @@
       #ticket-cocina { position: absolute; left: 0; top: 0; width: 100%; color: black !important; }
       .no-print { display: none !important; }
     }
+
+    /* ===== RESPONSIVE: altura real de viewport en móviles (evita recortes por barra de navegador) ===== */
+    .app-shell { height: 100vh; height: 100dvh; }
+
+    /* ===== RESPONSIVE: panel de orden (carrito) =====
+       Por defecto (móvil/tablet, <1024px) el panel está oculto y solo aparece
+       como overlay a pantalla completa cuando se activa con .cart-open.
+       Desde 1024px (lg) vuelve a ser el panel lateral fijo original. */
+    #cart-section {
+      display: none;
+    }
+    #cart-section.cart-open {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      width: 100%;
+      animation: slideUpCart .22s ease-out;
+    }
+    @keyframes slideUpCart {
+      from { transform: translateY(16px); opacity: .4; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @media (min-width: 1024px) {
+      #cart-section,
+      #cart-section.cart-open {
+        display: flex !important;
+        position: static !important;
+        inset: auto !important;
+        z-index: auto !important;
+        width: 24rem !important;
+        animation: none !important;
+      }
+      #cart-mobile-close { display: none !important; }
+      #fab-carrito { display: none !important; }
+    }
+
+    /* Botón flotante para abrir el carrito en móvil/tablet */
+    #fab-carrito {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 30;
+    }
   </style>
 </head>
-<body class="bg-[#0c0b0a] text-zinc-100 h-screen flex flex-col overflow-hidden">
+<body class="app-shell bg-[#0c0b0a] text-zinc-100 flex flex-col overflow-hidden">
 
   <!-- ENCABEZADO PRINCIPAL DE LA APLICACIÓN -->
-  <header class="relative bg-gradient-to-r from-[#150c0a] via-[#1a0d0a] to-[#0c0b0a] border-b border-[#3a2418] px-6 py-3 flex justify-between items-center shrink-0 overflow-hidden">
+  <header class="relative bg-gradient-to-r from-[#150c0a] via-[#1a0d0a] to-[#0c0b0a] border-b border-[#3a2418] px-3 sm:px-6 py-2.5 sm:py-3 flex justify-between items-center shrink-0 overflow-hidden">
     <div class="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[#f2a93b] to-transparent opacity-70"></div>
-    <div class="flex items-center gap-3 relative z-10">
-      <div class="flex items-center gap-2 bg-[#0c0b0a] border border-[#3a2418] px-3 py-1.5 rounded-lg ember-glow">
-        <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a] flame-pulse"></i>
-        <span class="font-display text-xl leading-none text-white">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
+    <div class="flex items-center gap-2 sm:gap-3 relative z-10 min-w-0">
+      <div class="flex items-center gap-2 bg-[#0c0b0a] border border-[#3a2418] px-2.5 sm:px-3 py-1.5 rounded-lg ember-glow shrink-0">
+        <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7a1a] flame-pulse"></i>
+        <span class="font-display text-base sm:text-xl leading-none text-white whitespace-nowrap">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
       </div>
-      <span class="text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase">POS v3.0 · Analytics Protegido</span>
+      <span class="hidden md:inline text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase whitespace-nowrap">POS v3.0 · Analytics Protegido</span>
     </div>
-    <div class="text-right relative z-10">
-      <p id="clock" class="text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
-      <p class="text-[11px] text-emerald-400 flex items-center justify-end gap-1.5 mt-0.5">
+    <div class="text-right relative z-10 shrink-0">
+      <p id="clock" class="text-xs sm:text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
+      <p class="hidden sm:flex text-[11px] text-emerald-400 items-center justify-end gap-1.5 mt-0.5">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
       </p>
     </div>
@@ -105,13 +149,13 @@
     <section class="flex-1 flex flex-col border-r border-[#2a2019] bg-[#0c0b0a] overflow-hidden grill-texture">
 
       <!-- BARRA DE NAVEGACIÓN Y CATEGORÍAS -->
-      <div id="category-bar" class="p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0">
+      <div id="category-bar" class="p-3 sm:p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0">
         <!-- Renderizado dinámicamente incluyendo el botón RESUMEN -->
       </div>
 
       <!-- VISTA 1: REJILLA DE PRODUCTOS (POS) -->
-      <div id="vista-pos" class="flex-1 p-4 overflow-y-auto">
-        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div id="vista-pos" class="flex-1 p-3 sm:p-4 overflow-y-auto pb-24 lg:pb-4">
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           <div class="col-span-full flex flex-col items-center justify-center py-20 text-[#a69a8a] gap-3">
             <div class="w-8 h-8 border-4 border-[#e8332a] border-t-transparent rounded-full animate-spin"></div>
             <p class="font-display tracking-wide text-sm">CARGANDO MENÚ...</p>
@@ -120,7 +164,7 @@
       </div>
 
       <!-- VISTA 2: DASHBOARD DE RESUMEN DE VENTAS (GERENCIAL) -->
-      <div id="vista-resumen" class="flex-1 p-6 overflow-y-auto hidden space-y-6">
+      <div id="vista-resumen" class="flex-1 p-4 sm:p-6 overflow-y-auto hidden space-y-6 pb-24 lg:pb-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#18140f] p-4 rounded-xl border border-[#2a2019]">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg bg-[#f2a93b]/10 border border-[#f2a93b]/30 flex items-center justify-center shrink-0">
@@ -205,20 +249,25 @@
     </section>
 
     <!-- SECCIÓN DERECHA: ORDEN Y DATOS DEL CLIENTE -->
-    <section class="w-96 bg-[#120f0c] flex flex-col shrink-0 border-l border-[#2a2019]">
-      <div class="p-4 border-b border-[#2a2019] flex justify-between items-center bg-[#18140f]">
-        <h2 class="font-display text-xl text-white flex items-center gap-2 tracking-wide">
-          <span class="w-8 h-8 rounded-lg bg-[#e8332a]/10 border border-[#e8332a]/30 flex items-center justify-center">
-            <i data-lucide="shopping-cart" class="w-4 h-4 text-[#e8332a]"></i>
-          </span> ORDEN ACTUAL
-        </h2>
-        <button onclick="vaciarCarrito()" class="text-xs text-[#a69a8a] hover:text-[#e8332a] transition flex items-center gap-1">
+    <section id="cart-section" class="w-full lg:w-96 bg-[#120f0c] flex-col shrink-0 border-l border-[#2a2019]">
+      <div class="p-4 border-b border-[#2a2019] flex justify-between items-center bg-[#18140f] shrink-0">
+        <div class="flex items-center gap-2">
+          <button id="cart-mobile-close" onclick="cerrarCarritoMobile()" class="w-8 h-8 rounded-lg bg-[#0c0b0a] border border-[#35291f] flex items-center justify-center text-zinc-300 hover:text-white transition shrink-0">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <h2 class="font-display text-lg sm:text-xl text-white flex items-center gap-2 tracking-wide">
+            <span class="w-8 h-8 rounded-lg bg-[#e8332a]/10 border border-[#e8332a]/30 flex items-center justify-center shrink-0">
+              <i data-lucide="shopping-cart" class="w-4 h-4 text-[#e8332a]"></i>
+            </span> <span class="hidden sm:inline">ORDEN ACTUAL</span><span class="sm:hidden">ORDEN</span>
+          </h2>
+        </div>
+        <button onclick="vaciarCarrito()" class="text-xs text-[#a69a8a] hover:text-[#e8332a] transition flex items-center gap-1 shrink-0">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Vaciar
         </button>
       </div>
 
       <!-- DATOS DEL CLIENTE -->
-      <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2">
+      <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2 shrink-0">
         <div>
           <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NOMBRE / APELLIDO DEL CLIENTE</label>
           <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
@@ -238,7 +287,7 @@
       </div>
 
       <!-- PANEL DE TOTALES Y MÉTODOS DE PAGO -->
-      <div class="p-4 border-t border-[#2a2019] bg-[#0c0b0a] space-y-3">
+      <div class="p-4 border-t border-[#2a2019] bg-[#0c0b0a] space-y-3 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div class="space-y-1 text-sm">
           <div class="flex justify-between text-[#a69a8a]">
             <span>Subtotal</span>
@@ -272,6 +321,15 @@
     </section>
   </main>
 
+  <!-- BOTÓN FLOTANTE: ABRIR ORDEN ACTUAL (solo móvil/tablet) -->
+  <button id="fab-carrito" onclick="abrirCarritoMobile()" class="hidden bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] text-white rounded-full shadow-2xl shadow-[#e8332a]/30 pl-4 pr-5 py-3 items-center gap-2.5 font-bold text-sm">
+    <span class="relative">
+      <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+      <span id="fab-carrito-badge" class="hidden absolute -top-2 -right-2 bg-[#1a1208] text-[#f2a93b] text-[10px] font-black rounded-full w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center border border-[#f2a93b]/40">0</span>
+    </span>
+    <span id="fab-carrito-total">Ver Orden</span>
+  </button>
+
   <!-- MODAL DE AUTENTICACIÓN (CONTRASEÑA DE GERENTE) -->
   <div id="modal-auth" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
     <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-6 rounded-2xl max-w-xs w-full shadow-2xl text-center space-y-4">
@@ -295,7 +353,7 @@
 
   <!-- MODAL MULTI-SALSA Y COMANDA -->
   <div id="modal-salsas" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-6 rounded-2xl max-w-lg w-full shadow-2xl">
+    <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-4 sm:p-6 rounded-2xl max-w-lg w-full shadow-2xl max-h-[90vh] max-h-[90dvh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-[#2a2019] pb-3 mb-4">
         <div class="flex items-center gap-2">
           <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a]"></i>
@@ -310,7 +368,7 @@
       </div>
       <div class="mb-4">
         <label class="block text-xs font-semibold text-[#a69a8a] mb-2 tracking-wide">¿CUÁNTAS SALSAS INCLUYE ESTE COMBO?</label>
-        <div class="grid grid-cols-4 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button type="button" onclick="setCantidadSalsas(1)" id="btn-num-salsas-1" class="num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition">1 Salsa</button>
           <button type="button" onclick="setCantidadSalsas(2)" id="btn-num-salsas-2" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">2 Salsas</button>
           <button type="button" onclick="setCantidadSalsas(3)" id="btn-num-salsas-3" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">3 Salsas</button>
@@ -405,7 +463,23 @@
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
       cargarMenu();
+      actualizarCarritoUI(); // deja el FAB en estado correcto desde el inicio
     });
+
+    // ===== RESPONSIVE: control del panel de orden en móvil/tablet (<1024px) =====
+    function esVistaMovil() {
+      return window.innerWidth < 1024;
+    }
+
+    function abrirCarritoMobile() {
+      document.getElementById('cart-section').classList.add('cart-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarCarritoMobile() {
+      document.getElementById('cart-section').classList.remove('cart-open');
+      document.body.style.overflow = '';
+    }
 
     function iniciarReloj() {
       setInterval(() => {
@@ -809,6 +883,28 @@
       document.getElementById('cart-subtotal').innerText = `${total.toFixed(2)} Bs`;
       document.getElementById('cart-total').innerText = `${total.toFixed(2)} Bs`;
       validarFormularioVenta();
+      actualizarFabCarrito(total);
+    }
+
+    // ===== RESPONSIVE: refleja el estado del carrito en el botón flotante móvil =====
+    function actualizarFabCarrito(total) {
+      const fab = document.getElementById('fab-carrito');
+      const badge = document.getElementById('fab-carrito-badge');
+      const totalLabel = document.getElementById('fab-carrito-total');
+      const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+
+      if (totalItems > 0) {
+        fab.classList.remove('hidden');
+        fab.classList.add('flex');
+        badge.classList.remove('hidden');
+        badge.innerText = totalItems;
+        totalLabel.innerText = `${total.toFixed(2)} Bs`;
+      } else {
+        fab.classList.add('hidden');
+        fab.classList.remove('flex');
+        badge.classList.add('hidden');
+        totalLabel.innerText = 'Ver Orden';
+      }
     }
 
     async function procesarVenta() {
@@ -859,6 +955,7 @@
     }
 
     function mostrarComandaCocinaModal(idVenta, totalBs, cliente, celular) {
+      cerrarCarritoMobile();
       document.getElementById('ticket-id').innerText = `ORDEN #: ${idVenta}`;
       document.getElementById('ticket-fecha').innerText = `Hora: ${new Date().toLocaleTimeString()} - ${new Date().toLocaleDateString()}`;
       document.getElementById('ticket-total').innerText = `${totalBs} Bs`;
