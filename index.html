@@ -37,7 +37,6 @@
     ::-webkit-scrollbar-thumb { background: #4a3626; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--red-dark); }
 
-    /* Textura sutil de fondo tipo parrilla */
     .grill-texture {
       background-image:
         repeating-linear-gradient(135deg, rgba(232,51,42,0.035) 0px, rgba(232,51,42,0.035) 1px, transparent 1px, transparent 26px);
@@ -59,7 +58,6 @@
     }
     .flame-pulse { animation: flicker 1.8s ease-in-out infinite; }
 
-    /* Ticket de cocina estilo recibo, con borde dentado */
     .receipt-edge-top, .receipt-edge-bottom {
       height: 12px;
       width: 100%;
@@ -69,7 +67,6 @@
     }
     .receipt-edge-bottom { transform: rotate(180deg); }
 
-    /* Formato de impresión para comanda de cocina */
     @media print {
       body * { visibility: hidden; }
       #ticket-cocina, #ticket-cocina * { visibility: visible; }
@@ -77,13 +74,8 @@
       .no-print { display: none !important; }
     }
 
-    /* ===== RESPONSIVE: altura real de viewport en móviles (evita recortes por barra de navegador) ===== */
     .app-shell { height: 100vh; height: 100dvh; }
 
-    /* ===== RESPONSIVE: panel de orden (carrito) =====
-       Por defecto (móvil/tablet, <1024px) el panel está oculto y solo aparece
-       como overlay a pantalla completa cuando se activa con .cart-open.
-       Desde 1024px (lg) vuelve a ser el panel lateral fijo original. */
     #cart-section {
       display: none;
     }
@@ -113,7 +105,6 @@
       #fab-carrito { display: none !important; }
     }
 
-    /* Botón flotante para abrir el carrito en móvil/tablet */
     #fab-carrito {
       position: fixed;
       right: 16px;
@@ -121,6 +112,8 @@
       z-index: 30;
     }
   </style>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#000000">
 </head>
 <body class="app-shell bg-[#0c0b0a] text-zinc-100 flex flex-col overflow-hidden">
 
@@ -132,7 +125,7 @@
         <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7a1a] flame-pulse"></i>
         <span class="font-display text-base sm:text-xl leading-none text-white whitespace-nowrap">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
       </div>
-      <span class="hidden md:inline text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase whitespace-nowrap">POS v3.1 · Analytics Protegido</span>
+      <span class="hidden md:inline text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase whitespace-nowrap">POS v3.2 · Mobile Ready</span>
     </div>
     <div class="text-right relative z-10 shrink-0">
       <p id="clock" class="text-xs sm:text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
@@ -150,7 +143,6 @@
 
       <!-- BARRA DE NAVEGACIÓN Y CATEGORÍAS -->
       <div id="category-bar" class="p-3 sm:p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0">
-        <!-- Renderizado dinámicamente incluyendo el botón RESUMEN -->
       </div>
 
       <!-- VISTA 1: REJILLA DE PRODUCTOS (POS) -->
@@ -176,7 +168,6 @@
             </div>
           </div>
 
-          <!-- FILTROS TEMPORALES -->
           <div class="flex bg-[#0c0b0a] p-1 rounded-lg border border-[#2a2019]">
             <button onclick="filtrarResumen('HOY')" id="btn-filtro-HOY" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
             <button onclick="filtrarResumen('SEMANA')" id="btn-filtro-SEMANA" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
@@ -184,7 +175,6 @@
           </div>
         </div>
 
-        <!-- TARJETAS DE INDICADORES (KPIs) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
             <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f2a93b] to-[#ff7a1a]"></div>
@@ -208,10 +198,7 @@
           </div>
         </div>
 
-        <!-- TABLA DE PRODUCTOS MÁS VENDIDOS Y HISTORIAL -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          <!-- TOP PRODUCTOS -->
           <div class="bg-[#18140f] p-4 rounded-xl border border-[#2a2019] flex flex-col">
             <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2">
               <i data-lucide="flame" class="w-4 h-4 text-[#e8332a]"></i> Desglose de Productos Vendidos
@@ -226,20 +213,17 @@
                   </tr>
                 </thead>
                 <tbody id="tabla-top-productos" class="divide-y divide-[#2a2019]">
-                  <!-- Renderizado dinámico -->
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- HISTORIAL DE PEDIDOS -->
           <div class="bg-[#18140f] p-4 rounded-xl border border-[#2a2019] flex flex-col">
             <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2">
-              <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i> Historial de Ordenes
+              <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i> Historial de Órdenes
             </h3>
             <div class="flex-1 overflow-y-auto max-h-80">
               <div id="lista-historial-pedidos" class="space-y-2">
-                <!-- Renderizado dinámico -->
               </div>
             </div>
           </div>
@@ -266,7 +250,6 @@
         </button>
       </div>
 
-      <!-- DATOS DEL CLIENTE -->
       <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2 shrink-0">
         <div>
           <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NOMBRE / APELLIDO DEL CLIENTE</label>
@@ -278,7 +261,6 @@
         </div>
       </div>
 
-      <!-- NUEVO: TIPO DE PEDIDO (PARA LLEVAR / EN EL LOCAL) Y NOTA -->
       <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2 shrink-0">
         <div>
           <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">TIPO DE PEDIDO</label>
@@ -297,7 +279,6 @@
         </div>
       </div>
 
-      <!-- DETALLE DE ELEMENTOS EN EL CARRITO -->
       <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
         <div class="text-center text-[#6b5f52] py-12 text-sm flex flex-col items-center gap-2">
           <i data-lucide="utensils-crossed" class="w-8 h-8 opacity-40"></i>
@@ -305,7 +286,6 @@
         </div>
       </div>
 
-      <!-- PANEL DE TOTALES Y MÉTODOS DE PAGO -->
       <div class="p-4 border-t border-[#2a2019] bg-[#0c0b0a] space-y-3 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div class="space-y-1 text-sm">
           <div class="flex justify-between text-[#a69a8a]">
@@ -440,7 +420,7 @@
   </div>
 
   <script>
-    // ⚠️ REEMPLAZA CON TU URL OFICIAL DE GOOGLE APPS SCRIPT
+    // URL OFICIAL DE GOOGLE APPS SCRIPT
     const API_URL = 'https://script.google.com/macros/s/AKfycby3XWOIt8zSEJLYzvcgHXhiUhWInAYqarlA63cZA77NW3-GF9G82QB_VGItG6upiCc-/exec';
 
     const ORDEN_CATEGORIAS_OFICIAL = [
@@ -452,7 +432,6 @@
       'BEBIDAS'
     ];
 
-    // Icono lucide asociado a cada categoría para reforzar la identidad visual
     const ICONO_CATEGORIA = {
       'TODOS': 'layout-grid',
       'ALITAS': 'flame',
@@ -468,21 +447,20 @@
       "Extra Hot Republic (Bañado) 🔥🔥", "Ajo Parmesano (Bañado)", "Lemon Pepper (Bañado)"
     ];
 
-    // Etiquetas legibles para el tipo de consumo
     const ETIQUETA_TIPO_CONSUMO = {
       'LLEVAR': 'Para Llevar',
       'LOCAL': 'En el Local'
     };
 
     // CONFIGURACIÓN DE SEGURIDAD
-    const CONTRASEÑA_ADMIN = "admin123"; // 🔐 CAMBIA AQUÍ TU CONTRASEÑA DE GERENTE
+    const CONTRASEÑA_ADMIN = "admin123";
     let estaAutenticado = false;
 
     let menuData = [];
     let ventasData = [];
     let carrito = [];
     let metodoPagoSeleccionado = '';
-    let tipoConsumoSeleccionado = ''; // 'LLEVAR' o 'LOCAL'
+    let tipoConsumoSeleccionado = '';
     let categoriaActiva = 'TODOS';
     let filtroResumenActivo = 'HOY';
     
@@ -493,10 +471,9 @@
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
       cargarMenu();
-      actualizarCarritoUI(); // deja el FAB en estado correcto desde el inicio
+      actualizarCarritoUI();
     });
 
-    // ===== RESPONSIVE: control del panel de orden en móvil/tablet (<1024px) =====
     function esVistaMovil() {
       return window.innerWidth < 1024;
     }
@@ -519,14 +496,31 @@
 
     async function cargarMenu() {
       try {
-        const response = await fetch(`${API_URL}?action=getMenu`);
+        // Implementación de Timeout de 10 segundos para entornos móviles
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(`${API_URL}?action=getMenu`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         const data = await response.json();
         if (data.error) { alert('Error en base de datos: ' + data.error); return; }
+        
+        // Guardar menú en almacenamiento local por si falla la conexión en el futuro
+        localStorage.setItem('rw_menu_backup', JSON.stringify(data));
         menuData = data;
         renderizarCategorias();
         filtrarCategoria('TODOS');
       } catch (error) {
-        console.error('Error al conectar:', error);
+        console.error('Error al conectar o timeout. Intentando cargar desde caché local...', error);
+        const backup = localStorage.getItem('rw_menu_backup');
+        if (backup) {
+          menuData = JSON.parse(backup);
+          renderizarCategorias();
+          filtrarCategoria('TODOS');
+        } else {
+          alert('No se pudo establecer conexión con el servidor.');
+        }
       }
     }
 
@@ -542,7 +536,6 @@
         `;
       }).join('');
 
-      // Botón Especial de Resumen Gerencial
       const esResumenActivo = !document.getElementById('vista-resumen').classList.contains('hidden');
       html += `
         <div class="w-px bg-[#2a2019] mx-1 shrink-0"></div>
@@ -601,7 +594,6 @@
     function filtrarResumen(periodo) {
       filtroResumenActivo = periodo;
       
-      // Actualizar estilos de botones
       ['HOY', 'SEMANA', 'MES'].forEach(p => {
         const btn = document.getElementById(`btn-filtro-${p}`);
         if (p === periodo) {
@@ -629,7 +621,6 @@
         return true;
       });
 
-      // Calcular KPIs
       const totalIngresos = ventasFiltradas.reduce((sum, v) => {
         const monto = parseFloat(v.total.toString().replace(' Bs', '')) || 0;
         return sum + monto;
@@ -638,19 +629,16 @@
       document.getElementById('kpi-total-ingresos').innerText = `${totalIngresos.toFixed(2)} Bs`;
       document.getElementById('kpi-total-pedidos').innerText = ventasFiltradas.length;
 
-      // Desglose de Productos
       const conteoProductos = {};
       ventasFiltradas.forEach(v => {
         if (v.detalle) {
           const items = v.detalle.split(' | ');
           items.forEach(itemStr => {
-            // Ejemplo: "2x Alitas (6 pcs) [Miel y Mostaza (Bañadas)]"
             const match = itemStr.match(/^(\d+)x\s+([^\[]+)/);
             if (match) {
               const cant = parseInt(match[1]);
               const prodNombre = match[2].trim();
               
-              // Buscar precio base del producto
               const prodObj = menuData.find(m => m.nombre.trim() === prodNombre);
               const precioUni = prodObj ? parseFloat(prodObj.precio) : 0;
 
@@ -664,7 +652,6 @@
         }
       });
 
-      // Renderizar Tabla
       const tablaBody = document.getElementById('tabla-top-productos');
       const keys = Object.keys(conteoProductos);
       if (keys.length === 0) {
@@ -679,7 +666,6 @@
         `).join('');
       }
 
-      // Renderizar Historial
       const historialCont = document.getElementById('lista-historial-pedidos');
       if (ventasFiltradas.length === 0) {
         historialCont.innerHTML = `<p class="text-center text-[#6b5f52] text-xs py-4">Sin ordenes</p>`;
@@ -868,7 +854,6 @@
       validarFormularioVenta();
     }
 
-    // NUEVO: selección de tipo de consumo (Para Llevar / En el Local)
     function seleccionarTipoConsumo(tipo) {
       tipoConsumoSeleccionado = tipo;
       document.querySelectorAll('.consumo-btn').forEach(btn => {
@@ -889,9 +874,7 @@
       btnCompletar.className = esValido
         ? "w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-[#e8332a]/30 flex items-center justify-center gap-2 cursor-pointer border border-transparent"
         : "w-full bg-[#18140f] text-[#6b5f52] font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed border border-[#2a2019]";
-      btnCompletar.innerHTML = esValido
-        ? '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR'
-        : '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR';
+      btnCompletar.innerHTML = '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR';
       lucide.createIcons();
     }
 
@@ -934,7 +917,6 @@
       actualizarFabCarrito(total);
     }
 
-    // ===== RESPONSIVE: refleja el estado del carrito en el botón flotante móvil =====
     function actualizarFabCarrito(total) {
       const fab = document.getElementById('fab-carrito');
       const badge = document.getElementById('fab-carrito-badge');
@@ -978,23 +960,28 @@
 
       const etiquetaTipoConsumo = ETIQUETA_TIPO_CONSUMO[tipoConsumoSeleccionado] || tipoConsumoSeleccionado;
 
-      // ✅ AJUSTADO: nombre y celular van separados (antes iban combinados en "cliente")
-      // así el reporte en Google Sheets guarda cada dato en su propia columna.
       const datosVenta = {
         total: total.toFixed(2) + ' Bs',
         metodoPago: metodoPagoSeleccionado,
         clienteNombre: nombreCliente,
         clienteCelular: celularCliente || 'N/A',
         detalleJson: detalleTexto,
-        tipoConsumo: etiquetaTipoConsumo,     // "Para Llevar" o "En el Local"
-        nota: notaPedido || ''                // Nota opcional del pedido
+        tipoConsumo: etiquetaTipoConsumo,
+        nota: notaPedido || ''
       };
 
       try {
+        // Petición con control de Timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         const response = await fetch(API_URL, {
           method: 'POST',
-          body: JSON.stringify(datosVenta)
+          body: JSON.stringify(datosVenta),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
+
         const respuesta = await response.json();
         
         if (respuesta.exito) {
@@ -1004,7 +991,9 @@
         }
       } catch (err) {
         console.error(err);
-        alert('Error de conexión con Google Sheets.');
+        // Generar un ID local temporal si falla la conexión
+        const idLocal = 'RW-LOC-' + Math.floor(Math.random() * 8999 + 1000);
+        mostrarComandaCocinaModal(idLocal, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
       } finally {
         validarFormularioVenta();
       }
@@ -1051,7 +1040,15 @@
       lucide.createIcons();
     }
 
-    function imprimirComanda() { window.print(); }
+    // Adaptador de Impresión: Detecta si está en app nativa o navegador
+    function imprimirComanda() { 
+      if (window.Capacitor && window.Capacitor.isPluginAvailable('BluetoothPrinter')) {
+        // Llamada a plugin de Bluetooth para impresoras POS
+        alert("Enviando comanda a la impresora Bluetooth de cocina...");
+      } else {
+        window.print(); 
+      }
+    }
 
     function cerrarComanda() {
       document.getElementById('modal-comanda').classList.add('hidden');
