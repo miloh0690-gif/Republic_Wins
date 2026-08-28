@@ -2,18 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <!-- Reemplazar las etiquetas META de la línea 5 a 10 con este bloque optimizado para iOS -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>Republic Wings - POS & Dashboard</title>
+  <!-- Configuración Viewport optimizada para iOS y dispositivos móviles (Notch / Bordes redondeados) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Republic Wings - POS & Dashboard</title>
 
-<!-- CONFIGURACIÓN NATIVA PARA APPLE / iOS -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Republic Wings POS">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/785/785116.png">
+  <!-- CONFIGURACIÓN NATIVA EXCLUSIVA PARA APPLE iOS (PWA) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Republic POS">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/785/785116.png">
 
-<!-- Tailwind CSS para interfaz responsiva -->
-<script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS para interfaz responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Iconos Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Tipografía de marca -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,8 +83,6 @@
     }
     .receipt-edge-bottom { transform: rotate(180deg); }
 
-    /* Ticket dimensionado para rollo térmico genérico de 80mm (compatible con cualquier
-       impresora térmica de comandas que quede instalada como impresora del sistema/app) */
     @page {
       size: 80mm auto;
       margin: 0;
@@ -195,7 +195,6 @@
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
         </p>
       </div>
-      <!-- Botón de Cerrar Sesión -->
       <button onclick="bloquearPantalla()" title="Cerrar Sesión / Bloquear Caja" class="w-8 h-8 rounded-lg bg-[#18140f] border border-[#35291f] flex items-center justify-center text-[#a69a8a] hover:text-[#e8332a] transition">
         <i data-lucide="log-out" class="w-4 h-4"></i>
       </button>
@@ -484,14 +483,24 @@
     // URL del Web App de Google Apps Script (Backend)
     const API_URL = 'https://script.google.com/macros/s/AKfycby3XWOIt8zSEJLYzvcgHXhiUhWInAYqarlA63cZA77NW3-GF9G82QB_VGItG6upiCc-/exec';
 
+    // MENÚ DE RESPALDO LOCAL (Estrategia de resiliencia frente a fallos de red)
+    const MENU_RESPALDO = [
+      { id: "P01", nombre: "Combo 6 Alitas + Salsas", categoria: "ALITAS", precio: "35.00", imagenUrl: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300" },
+      { id: "P02", nombre: "Combo 12 Alitas + Salsas", categoria: "ALITAS", precio: "65.00", imagenUrl: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=300" },
+      { id: "P03", nombre: "Fingers de Pollo (4 piezas)", categoria: "FINGERS", precio: "28.00", imagenUrl: "https://images.unsplash.com/photo-1562967914-608f82629710?w=300" },
+      { id: "P04", nombre: "Canasta Familiar Republic", categoria: "POLLO A LA CANASTA", precio: "85.00", imagenUrl: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=300" },
+      { id: "P05", nombre: "Papas Fritas Especiales", categoria: "ACOMPAÑAMIENTOS", precio: "15.00", imagenUrl: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=300" },
+      { id: "P06", nombre: "Gaseosa 500ml", categoria: "BEBIDAS", precio: "10.00", imagenUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300" }
+    ];
+
     const ORDEN_CATEGORIAS_OFICIAL = ['TODOS', 'ALITAS', 'FINGERS', 'POLLO A LA CANASTA', 'ACOMPAÑAMIENTOS', 'BEBIDAS'];
     const ICONO_CATEGORIA = { 'TODOS': 'layout-grid', 'ALITAS': 'flame', 'FINGERS': 'utensils', 'POLLO A LA CANASTA': 'shopping-basket', 'ACOMPAÑAMIENTOS': 'salad', 'BEBIDAS': 'cup-soda' };
     const LISTA_SALSAS = ["Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese", "Albahaca y Hierbas", "Hot Republic 🔥", "Bufallo Wild 🔥", "Extra Hot Republic (Bañado) 🔥🔥", "Ajo Parmesano (Bañado)", "Lemon Pepper (Bañado)"];
     const ETIQUETA_TIPO_CONSUMO = { 'LLEVAR': 'Para Llevar', 'LOCAL': 'En el Local' };
 
     // SEGURIDAD DE ACCESO
-    const CLAVE_OPERADOR = "2026_Sucursal_Villa_Victoria"; // Clave de acceso general al POS
-    const CONTRASEÑA_ADMIN = "03.Admin_Javier"; // Clave gerencial de reportes
+    const CLAVE_OPERADOR = "2026_Sucursal_Villa_Victoria";
+    const CONTRASEÑA_ADMIN = "03.Admin_Javier";
     let estaAutenticado = false;
 
     let menuData = [];
@@ -510,7 +519,6 @@
       lucide.createIcons();
     });
 
-    // SISTEMA DE AUTENTICACIÓN INICIAL
     function autenticarInicioSesion() {
       const inputPass = document.getElementById('input-login-pass').value;
       const errorMsg = document.getElementById('error-login-pass');
@@ -518,7 +526,6 @@
       if (inputPass === CLAVE_OPERADOR) {
         errorMsg.classList.add('hidden');
         
-        // Animación de salida de la pantalla de Login
         const screenLogin = document.getElementById('screen-login');
         screenLogin.style.transition = 'opacity 0.5s ease';
         screenLogin.style.opacity = '0';
@@ -551,23 +558,24 @@
     async function cargarMenu() {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        // Límite de tiempo de 4 segundos para evitar congelamiento
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
         const response = await fetch(`${API_URL}?action=getMenu`, { signal: controller.signal });
         clearTimeout(timeoutId);
         const data = await response.json();
-        if (data.error) { alert('Error en base de datos: ' + data.error); return; }
+        
+        if (data.error || !Array.isArray(data) || data.length === 0) { 
+          throw new Error('Respuesta inválida o vacía'); 
+        }
         localStorage.setItem('rw_menu_backup', JSON.stringify(data));
         menuData = data;
+      } catch (error) {
+        console.warn('Servidor remoto no disponible. Cargando respaldo de datos...', error);
+        const backup = localStorage.getItem('rw_menu_backup');
+        menuData = backup ? JSON.parse(backup) : MENU_RESPALDO;
+      } finally {
         renderizarCategorias();
         filtrarCategoria('TODOS');
-      } catch (error) {
-        console.error('Cargando caché local...', error);
-        const backup = localStorage.getItem('rw_menu_backup');
-        if (backup) {
-          menuData = JSON.parse(backup);
-          renderizarCategorias();
-          filtrarCategoria('TODOS');
-        }
       }
     }
 
@@ -926,7 +934,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(datosVenta), signal: controller.signal });
         clearTimeout(timeoutId);
         const respuesta = await response.json();
@@ -979,30 +987,19 @@
       lucide.createIcons();
     }
 
-    // Impresión de la comanda. Se usa el diálogo de impresión nativo del sistema
-    // (window.print) porque es lo que garantiza compatibilidad con CUALQUIER
-    // impresora que el usuario tenga instalada/emparejada en el dispositivo
-    // (térmica de 80mm, Bluetooth, USB, WiFi, etc.), sin depender de un modelo
-    // o SDK de impresora específico.
     function imprimirComanda() {
       const ticket = document.getElementById('ticket-cocina');
       if (!ticket) return;
 
-      // Detecta si la app corre "instalada" como PWA (standalone). En ese modo,
-      // en algunos WebView de Android, window.print() puede no disparar el
-      // diálogo del sistema. Como respaldo, se abre el ticket en una ventana
-      // aparte e imprime desde ahí.
       const esStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
       if (!esStandalone) {
-        // Camino normal: imprimir directamente la app.
         window.print();
         return;
       }
 
       const ventanaImpresion = window.open('', '_blank');
       if (!ventanaImpresion) {
-        // Si el navegador bloqueó la ventana emergente, se intenta igual con print directo.
         window.print();
         return;
       }
