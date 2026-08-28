@@ -2,12 +2,18 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Republic Wings - POS & Dashboard</title>
-  <!-- Tailwind CSS para interfaz responsiva -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Iconos Lucide -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Reemplazar las etiquetas META de la línea 5 a 10 con este bloque optimizado para iOS -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Republic Wings - POS & Dashboard</title>
+
+<!-- CONFIGURACIÓN NATIVA PARA APPLE / iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Republic Wings POS">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/785/785116.png">
+
+<!-- Tailwind CSS para interfaz responsiva -->
+<script src="https://cdn.tailwindcss.com"></script>
   <!-- Tipografía de marca -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,10 +59,18 @@
     .brand-input:focus { border-color: var(--amber) !important; box-shadow: 0 0 0 3px rgba(242,169,59,0.15); }
 
     @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .55; }
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .7; transform: scale(1.08); }
     }
     .flame-pulse { animation: flicker 1.8s ease-in-out infinite; }
+
+    /* Animación para la Pantalla de Inicio (Splash Screen) */
+    @keyframes pulseLogo {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 25px rgba(232,51,42,0.8)); }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+    .splash-logo-anim { animation: pulseLogo 2s infinite ease-in-out; }
 
     .receipt-edge-top, .receipt-edge-bottom {
       height: 12px;
@@ -67,18 +81,36 @@
     }
     .receipt-edge-bottom { transform: rotate(180deg); }
 
+    /* Ticket dimensionado para rollo térmico genérico de 80mm (compatible con cualquier
+       impresora térmica de comandas que quede instalada como impresora del sistema/app) */
+    @page {
+      size: 80mm auto;
+      margin: 0;
+    }
     @media print {
+      html, body { width: 80mm; }
       body * { visibility: hidden; }
       #ticket-cocina, #ticket-cocina * { visibility: visible; }
-      #ticket-cocina { position: absolute; left: 0; top: 0; width: 100%; color: black !important; }
+      #ticket-cocina {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        max-width: 80mm;
+        padding: 2mm 3mm 4mm;
+        color: black !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        font-size: 12px;
+      }
+      #ticket-cocina .font-display { font-size: 20px; }
+      .receipt-edge-top, .receipt-edge-bottom { display: none !important; }
       .no-print { display: none !important; }
     }
 
     .app-shell { height: 100vh; height: 100dvh; }
 
-    #cart-section {
-      display: none;
-    }
+    #cart-section { display: none; }
     #cart-section.cart-open {
       display: flex;
       position: fixed;
@@ -117,6 +149,35 @@
 </head>
 <body class="app-shell bg-[#0c0b0a] text-zinc-100 flex flex-col overflow-hidden">
 
+  <!-- PANTALLA DE INICIO DE SESIÓN / INGRESO DE CLAVE -->
+  <div id="screen-login" class="fixed inset-0 bg-[#0c0b0a] z-50 flex flex-col items-center justify-center p-4 grill-texture">
+    <div class="max-w-sm w-full bg-[#18140f] border border-[#35291f] p-8 rounded-2xl shadow-2xl text-center space-y-6 ember-glow relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e8332a] via-[#ff7a1a] to-[#f2a93b]"></div>
+      
+      <!-- LOGO CON ANIMACIÓN DE FUEGO -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="w-16 h-16 rounded-2xl bg-[#0c0b0a] border border-[#35291f] flex items-center justify-center splash-logo-anim">
+          <i data-lucide="flame" class="w-10 h-10 text-[#e8332a]"></i>
+        </div>
+        <h1 class="font-display text-3xl tracking-wide text-white mt-2">REPUBLIC <span class="text-[#e8332a]">WINGS</span></h1>
+        <p class="text-xs text-[#a69a8a] font-mono-brand">SISTEMA POS & CONTROL DE CAJA</p>
+      </div>
+
+      <!-- FORMULARIO DE ACCESO -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider mb-2">Ingrese Clave de Operador</label>
+          <input type="password" id="input-login-pass" placeholder="••••" maxlength="40" autocomplete="off" onkeydown="if(event.key==='Enter') autenticarInicioSesion()" class="brand-input w-full bg-[#0c0b0a] border border-[#35291f] rounded-xl px-4 py-3 text-center text-xl text-white font-mono-brand focus:outline-none transition tracking-widest">
+          <p id="error-login-pass" class="text-xs text-[#e8332a] font-bold mt-2 hidden">⚠️ Clave incorrecta. Intente de nuevo.</p>
+        </div>
+        
+        <button onclick="autenticarInicioSesion()" class="w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3.5 rounded-xl text-sm tracking-wide transition shadow-lg shadow-[#e8332a]/30 flex items-center justify-center gap-2">
+          <i data-lucide="key-round" class="w-4 h-4"></i> INGRESAR AL SISTEMA
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ENCABEZADO PRINCIPAL DE LA APLICACIÓN -->
   <header class="relative bg-gradient-to-r from-[#150c0a] via-[#1a0d0a] to-[#0c0b0a] border-b border-[#3a2418] px-3 sm:px-6 py-2.5 sm:py-3 flex justify-between items-center shrink-0 overflow-hidden">
     <div class="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[#f2a93b] to-transparent opacity-70"></div>
@@ -127,23 +188,26 @@
       </div>
       <span class="hidden md:inline text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase whitespace-nowrap">POS v3.2 · Mobile Ready</span>
     </div>
-    <div class="text-right relative z-10 shrink-0">
-      <p id="clock" class="text-xs sm:text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
-      <p class="hidden sm:flex text-[11px] text-emerald-400 items-center justify-end gap-1.5 mt-0.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
-      </p>
+    <div class="flex items-center gap-3 relative z-10 shrink-0">
+      <div class="text-right">
+        <p id="clock" class="text-xs sm:text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
+        <p class="hidden sm:flex text-[11px] text-emerald-400 items-center justify-end gap-1.5 mt-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
+        </p>
+      </div>
+      <!-- Botón de Cerrar Sesión -->
+      <button onclick="bloquearPantalla()" title="Cerrar Sesión / Bloquear Caja" class="w-8 h-8 rounded-lg bg-[#18140f] border border-[#35291f] flex items-center justify-center text-[#a69a8a] hover:text-[#e8332a] transition">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
     </div>
   </header>
 
   <!-- CUERPO DEL POS -->
   <main class="flex-1 flex overflow-hidden">
-
     <!-- SECCIÓN IZQUIERDA: MENÚ / DASHBOARD -->
     <section class="flex-1 flex flex-col border-r border-[#2a2019] bg-[#0c0b0a] overflow-hidden grill-texture">
-
       <!-- BARRA DE NAVEGACIÓN Y CATEGORÍAS -->
-      <div id="category-bar" class="p-3 sm:p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0">
-      </div>
+      <div id="category-bar" class="p-3 sm:p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0"></div>
 
       <!-- VISTA 1: REJILLA DE PRODUCTOS (POS) -->
       <div id="vista-pos" class="flex-1 p-3 sm:p-4 overflow-y-auto pb-24 lg:pb-4">
@@ -212,8 +276,7 @@
                     <th class="p-2 text-right">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody id="tabla-top-productos" class="divide-y divide-[#2a2019]">
-                </tbody>
+                <tbody id="tabla-top-productos" class="divide-y divide-[#2a2019]"></tbody>
               </table>
             </div>
           </div>
@@ -223,11 +286,9 @@
               <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i> Historial de Órdenes
             </h3>
             <div class="flex-1 overflow-y-auto max-h-80">
-              <div id="lista-historial-pedidos" class="space-y-2">
-              </div>
+              <div id="lista-historial-pedidos" class="space-y-2"></div>
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -329,7 +390,7 @@
     <span id="fab-carrito-total">Ver Orden</span>
   </button>
 
-  <!-- MODAL DE AUTENTICACIÓN (CONTRASEÑA DE GERENTE) -->
+  <!-- MODAL DE AUTENTICACIÓN (GERENCIAL) -->
   <div id="modal-auth" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
     <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-6 rounded-2xl max-w-xs w-full shadow-2xl text-center space-y-4">
       <div class="w-12 h-12 bg-[#e8332a]/15 text-[#e8332a] rounded-full flex items-center justify-center mx-auto border border-[#e8332a]/30">
@@ -420,40 +481,17 @@
   </div>
 
   <script>
-    // URL OFICIAL DE GOOGLE APPS SCRIPT
+    // URL del Web App de Google Apps Script (Backend)
     const API_URL = 'https://script.google.com/macros/s/AKfycby3XWOIt8zSEJLYzvcgHXhiUhWInAYqarlA63cZA77NW3-GF9G82QB_VGItG6upiCc-/exec';
 
-    const ORDEN_CATEGORIAS_OFICIAL = [
-      'TODOS',
-      'ALITAS',
-      'FINGERS',
-      'POLLO A LA CANASTA',
-      'ACOMPAÑAMIENTOS',
-      'BEBIDAS'
-    ];
+    const ORDEN_CATEGORIAS_OFICIAL = ['TODOS', 'ALITAS', 'FINGERS', 'POLLO A LA CANASTA', 'ACOMPAÑAMIENTOS', 'BEBIDAS'];
+    const ICONO_CATEGORIA = { 'TODOS': 'layout-grid', 'ALITAS': 'flame', 'FINGERS': 'utensils', 'POLLO A LA CANASTA': 'shopping-basket', 'ACOMPAÑAMIENTOS': 'salad', 'BEBIDAS': 'cup-soda' };
+    const LISTA_SALSAS = ["Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese", "Albahaca y Hierbas", "Hot Republic 🔥", "Bufallo Wild 🔥", "Extra Hot Republic (Bañado) 🔥🔥", "Ajo Parmesano (Bañado)", "Lemon Pepper (Bañado)"];
+    const ETIQUETA_TIPO_CONSUMO = { 'LLEVAR': 'Para Llevar', 'LOCAL': 'En el Local' };
 
-    const ICONO_CATEGORIA = {
-      'TODOS': 'layout-grid',
-      'ALITAS': 'flame',
-      'FINGERS': 'utensils',
-      'POLLO A LA CANASTA': 'shopping-basket',
-      'ACOMPAÑAMIENTOS': 'salad',
-      'BEBIDAS': 'cup-soda'
-    };
-
-    const LISTA_SALSAS = [
-      "Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese", 
-      "Albahaca y Hierbas", "Hot Republic 🔥", "Bufallo Wild 🔥", 
-      "Extra Hot Republic (Bañado) 🔥🔥", "Ajo Parmesano (Bañado)", "Lemon Pepper (Bañado)"
-    ];
-
-    const ETIQUETA_TIPO_CONSUMO = {
-      'LLEVAR': 'Para Llevar',
-      'LOCAL': 'En el Local'
-    };
-
-    // CONFIGURACIÓN DE SEGURIDAD
-    const CONTRASEÑA_ADMIN = "admin123";
+    // SEGURIDAD DE ACCESO
+    const CLAVE_OPERADOR = "2026_Sucursal_Villa_Victoria"; // Clave de acceso general al POS
+    const CONTRASEÑA_ADMIN = "03.Admin_Javier"; // Clave gerencial de reportes
     let estaAutenticado = false;
 
     let menuData = [];
@@ -463,63 +501,72 @@
     let tipoConsumoSeleccionado = '';
     let categoriaActiva = 'TODOS';
     let filtroResumenActivo = 'HOY';
-    
     let productoTemp = null;
     let cantidadSalsasTemp = 1;
     let seleccionesSalsas = [];
 
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
-      cargarMenu();
-      actualizarCarritoUI();
+      lucide.createIcons();
     });
 
-    function esVistaMovil() {
-      return window.innerWidth < 1024;
+    // SISTEMA DE AUTENTICACIÓN INICIAL
+    function autenticarInicioSesion() {
+      const inputPass = document.getElementById('input-login-pass').value;
+      const errorMsg = document.getElementById('error-login-pass');
+
+      if (inputPass === CLAVE_OPERADOR) {
+        errorMsg.classList.add('hidden');
+        
+        // Animación de salida de la pantalla de Login
+        const screenLogin = document.getElementById('screen-login');
+        screenLogin.style.transition = 'opacity 0.5s ease';
+        screenLogin.style.opacity = '0';
+        
+        setTimeout(() => {
+          screenLogin.classList.add('hidden');
+          cargarMenu();
+          actualizarCarritoUI();
+        }, 500);
+      } else {
+        errorMsg.classList.remove('hidden');
+      }
     }
 
-    function abrirCarritoMobile() {
-      document.getElementById('cart-section').classList.add('cart-open');
-      document.body.style.overflow = 'hidden';
+    function bloquearPantalla() {
+      document.getElementById('input-login-pass').value = '';
+      const screenLogin = document.getElementById('screen-login');
+      screenLogin.classList.remove('hidden');
+      screenLogin.style.opacity = '1';
     }
 
-    function cerrarCarritoMobile() {
-      document.getElementById('cart-section').classList.remove('cart-open');
-      document.body.style.overflow = '';
-    }
+    function esVistaMovil() { return window.innerWidth < 1024; }
+    function abrirCarritoMobile() { document.getElementById('cart-section').classList.add('cart-open'); document.body.style.overflow = 'hidden'; }
+    function cerrarCarritoMobile() { document.getElementById('cart-section').classList.remove('cart-open'); document.body.style.overflow = ''; }
 
     function iniciarReloj() {
-      setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-      }, 1000);
+      setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
     }
 
     async function cargarMenu() {
       try {
-        // Implementación de Timeout de 10 segundos para entornos móviles
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
-
         const response = await fetch(`${API_URL}?action=getMenu`, { signal: controller.signal });
         clearTimeout(timeoutId);
-
         const data = await response.json();
         if (data.error) { alert('Error en base de datos: ' + data.error); return; }
-        
-        // Guardar menú en almacenamiento local por si falla la conexión en el futuro
         localStorage.setItem('rw_menu_backup', JSON.stringify(data));
         menuData = data;
         renderizarCategorias();
         filtrarCategoria('TODOS');
       } catch (error) {
-        console.error('Error al conectar o timeout. Intentando cargar desde caché local...', error);
+        console.error('Cargando caché local...', error);
         const backup = localStorage.getItem('rw_menu_backup');
         if (backup) {
           menuData = JSON.parse(backup);
           renderizarCategorias();
           filtrarCategoria('TODOS');
-        } else {
-          alert('No se pudo establecer conexión con el servidor.');
         }
       }
     }
@@ -549,18 +596,15 @@
     }
 
     function solicitarAccesoResumen() {
-      if (estaAutenticado) {
-        mostrarVistaResumen();
-      } else {
+      if (estaAutenticado) { mostrarVistaResumen(); } 
+      else {
         document.getElementById('auth-password').value = '';
         document.getElementById('auth-error').classList.add('hidden');
         document.getElementById('modal-auth').classList.remove('hidden');
       }
     }
 
-    function cerrarAuthModal() {
-      document.getElementById('modal-auth').classList.add('hidden');
-    }
+    function cerrarAuthModal() { document.getElementById('modal-auth').classList.add('hidden'); }
 
     function validarPassword() {
       const pass = document.getElementById('auth-password').value;
@@ -568,9 +612,7 @@
         estaAutenticado = true;
         cerrarAuthModal();
         mostrarVistaResumen();
-      } else {
-        document.getElementById('auth-error').classList.remove('hidden');
-      }
+      } else { document.getElementById('auth-error').classList.remove('hidden'); }
     }
 
     async function mostrarVistaResumen() {
@@ -586,65 +628,43 @@
         const data = await response.json();
         ventasData = Array.isArray(data) ? data : [];
         filtrarResumen(filtroResumenActivo);
-      } catch (err) {
-        console.error('Error al cargar ventas:', err);
-      }
+      } catch (err) { console.error('Error al cargar ventas:', err); }
     }
 
     function filtrarResumen(periodo) {
       filtroResumenActivo = periodo;
-      
       ['HOY', 'SEMANA', 'MES'].forEach(p => {
         const btn = document.getElementById(`btn-filtro-${p}`);
-        if (p === periodo) {
-          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white";
-        } else {
-          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition";
-        }
+        if (p === periodo) { btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white"; } 
+        else { btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition"; }
       });
 
       const ahora = new Date();
-      
       const ventasFiltradas = ventasData.filter(v => {
         if (!v.fecha) return false;
         const fechaVenta = new Date(v.fecha);
-        
-        if (periodo === 'HOY') {
-          return fechaVenta.toDateString() === ahora.toDateString();
-        } else if (periodo === 'SEMANA') {
-          const hace7Dias = new Date();
-          hace7Dias.setDate(ahora.getDate() - 7);
-          return fechaVenta >= hace7Dias;
-        } else if (periodo === 'MES') {
-          return fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear();
-        }
+        if (periodo === 'HOY') return fechaVenta.toDateString() === ahora.toDateString();
+        if (periodo === 'SEMANA') { const hace7Dias = new Date(); hace7Dias.setDate(ahora.getDate() - 7); return fechaVenta >= hace7Dias; }
+        if (periodo === 'MES') return fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear();
         return true;
       });
 
-      const totalIngresos = ventasFiltradas.reduce((sum, v) => {
-        const monto = parseFloat(v.total.toString().replace(' Bs', '')) || 0;
-        return sum + monto;
-      }, 0);
-
+      const totalIngresos = ventasFiltradas.reduce((sum, v) => sum + (parseFloat(v.total.toString().replace(' Bs', '')) || 0), 0);
       document.getElementById('kpi-total-ingresos').innerText = `${totalIngresos.toFixed(2)} Bs`;
       document.getElementById('kpi-total-pedidos').innerText = ventasFiltradas.length;
 
       const conteoProductos = {};
       ventasFiltradas.forEach(v => {
         if (v.detalle) {
-          const items = v.detalle.split(' | ');
-          items.forEach(itemStr => {
+          v.detalle.split(' | ').forEach(itemStr => {
             const match = itemStr.match(/^(\d+)x\s+([^\[]+)/);
             if (match) {
               const cant = parseInt(match[1]);
               const prodNombre = match[2].trim();
-              
               const prodObj = menuData.find(m => m.nombre.trim() === prodNombre);
               const precioUni = prodObj ? parseFloat(prodObj.precio) : 0;
 
-              if (!conteoProductos[prodNombre]) {
-                conteoProductos[prodNombre] = { cantidad: 0, subtotal: 0 };
-              }
+              if (!conteoProductos[prodNombre]) conteoProductos[prodNombre] = { cantidad: 0, subtotal: 0 };
               conteoProductos[prodNombre].cantidad += cant;
               conteoProductos[prodNombre].subtotal += (cant * precioUni);
             }
@@ -654,23 +674,20 @@
 
       const tablaBody = document.getElementById('tabla-top-productos');
       const keys = Object.keys(conteoProductos);
-      if (keys.length === 0) {
-        tablaBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-[#6b5f52]">No hay registros en este periodo</td></tr>`;
-      } else {
-        tablaBody.innerHTML = keys.map(k => `
+      tablaBody.innerHTML = keys.length === 0 
+        ? `<tr><td colspan="3" class="p-4 text-center text-[#6b5f52]">No hay registros en este periodo</td></tr>`
+        : keys.map(k => `
           <tr class="hover:bg-[#221c15] transition">
             <td class="p-2 font-bold text-zinc-200">${k}</td>
             <td class="p-2 text-center text-zinc-300 font-mono-brand">${conteoProductos[k].cantidad}</td>
             <td class="p-2 text-right text-[#f2a93b] font-bold">${conteoProductos[k].subtotal.toFixed(2)} Bs</td>
           </tr>
         `).join('');
-      }
 
       const historialCont = document.getElementById('lista-historial-pedidos');
-      if (ventasFiltradas.length === 0) {
-        historialCont.innerHTML = `<p class="text-center text-[#6b5f52] text-xs py-4">Sin ordenes</p>`;
-      } else {
-        historialCont.innerHTML = ventasFiltradas.map(v => `
+      historialCont.innerHTML = ventasFiltradas.length === 0
+        ? `<p class="text-center text-[#6b5f52] text-xs py-4">Sin ordenes</p>`
+        : ventasFiltradas.map(v => `
           <div class="bg-[#0c0b0a] p-2.5 rounded-lg border border-[#2a2019] text-xs space-y-1">
             <div class="flex justify-between font-bold text-zinc-300">
               <span class="font-mono-brand text-[#f2a93b]">${v.idVenta || 'RW-00'}</span> <span class="flex-1 px-2 truncate">${v.cliente || 'Cliente'}</span>
@@ -680,20 +697,16 @@
             <p class="text-[11px] text-[#6b5f52] line-clamp-1">${v.detalle || ''}</p>
           </div>
         `).join('');
-      }
     }
 
     function filtrarCategoria(categoria) {
       document.getElementById('vista-resumen').classList.add('hidden');
       document.getElementById('vista-pos').classList.remove('hidden');
-
       categoriaActiva = categoria;
       renderizarCategorias();
 
       const grid = document.getElementById('products-grid');
-      const filtrados = categoria === 'TODOS' 
-        ? menuData 
-        : menuData.filter(p => p.categoria.trim().toUpperCase() === categoria.toUpperCase());
+      const filtrados = categoria === 'TODOS' ? menuData : menuData.filter(p => p.categoria.trim().toUpperCase() === categoria.toUpperCase());
       
       if (filtrados.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-12 text-[#6b5f52]">No hay productos en esta categoría</div>`;
@@ -705,9 +718,7 @@
           <div class="h-32 w-full bg-[#221c15] overflow-hidden relative">
             <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
             <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent"></div>
-            <span class="absolute top-2 right-2 bg-[#0c0b0a]/85 backdrop-blur text-[10px] px-2 py-0.5 rounded text-[#f2a93b] font-bold border border-[#f2a93b]/25 uppercase tracking-wide">
-              ${p.categoria}
-            </span>
+            <span class="absolute top-2 right-2 bg-[#0c0b0a]/85 backdrop-blur text-[10px] px-2 py-0.5 rounded text-[#f2a93b] font-bold border border-[#f2a93b]/25 uppercase tracking-wide">${p.categoria}</span>
           </div>
           <div class="p-3 flex-1 flex flex-col justify-between">
             <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${p.nombre}</h3>
@@ -720,54 +731,40 @@
           </div>
         </div>
       `).join('');
-      
       lucide.createIcons();
     }
 
     function interceptarSeleccionProducto(idProducto) {
       const producto = menuData.find(p => p.id === idProducto);
       if (!producto) return;
-
       const catLower = producto.categoria.toLowerCase();
-      const requiereSalsa = catLower.includes('alita') || catLower.includes('finger');
-
-      if (requiereSalsa) {
+      if (catLower.includes('alita') || catLower.includes('finger')) {
         productoTemp = producto;
         document.getElementById('modal-prod-nombre').innerText = producto.nombre;
         setCantidadSalsas(1);
         document.getElementById('modal-salsas').classList.remove('hidden');
-      } else {
-        agregarDirectoAlCarrito(producto, []);
-      }
+      } else { agregarDirectoAlCarrito(producto, []); }
     }
 
     function setCantidadSalsas(num) {
       cantidadSalsasTemp = num;
       [1, 2, 3, 4].forEach(i => {
         const btn = document.getElementById(`btn-num-salsas-${i}`);
-        btn.className = (i === num) 
-          ? "num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition"
-          : "num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition";
+        btn.className = (i === num) ? "num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition" : "num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition";
       });
-
       seleccionesSalsas = [];
-      for (let i = 0; i < num; i++) {
-        seleccionesSalsas.push({ nombre: LISTA_SALSAS[0], modo: 'Bañadas' });
-      }
+      for (let i = 0; i < num; i++) seleccionesSalsas.push({ nombre: LISTA_SALSAS[0], modo: 'Bañadas' });
       renderizarFilasSalsas();
     }
 
     function renderizarFilasSalsas() {
-      const contenedor = document.getElementById('contenedor-filas-salsas');
-      contenedor.innerHTML = seleccionesSalsas.map((item, idx) => `
+      document.getElementById('contenedor-filas-salsas').innerHTML = seleccionesSalsas.map((item, idx) => `
         <div class="bg-[#0c0b0a] p-3 rounded-lg border border-[#2a2019] space-y-2">
           <span class="text-xs font-bold text-[#e8332a] uppercase tracking-wider">Salsa #${idx + 1}</span>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div>
-              <select onchange="actualizarSalsaSabor(${idx}, this.value)" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg p-2 text-xs text-white focus:outline-none transition">
-                ${LISTA_SALSAS.map(s => `<option value="${s}" ${s === item.nombre ? 'selected' : ''}>${s}</option>`).join('')}
-              </select>
-            </div>
+            <select onchange="actualizarSalsaSabor(${idx}, this.value)" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg p-2 text-xs text-white focus:outline-none transition">
+              ${LISTA_SALSAS.map(s => `<option value="${s}" ${s === item.nombre ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
             <div class="grid grid-cols-2 gap-1">
               <button type="button" onclick="actualizarSalsaModo(${idx}, 'Bañadas')" class="py-1.5 rounded text-[11px] font-bold transition ${item.modo === 'Bañadas' ? 'bg-[#e8332a] text-white' : 'bg-[#18140f] border border-[#35291f] text-zinc-400 hover:border-[#e8332a]/50'}">Bañadas</button>
               <button type="button" onclick="actualizarSalsaModo(${idx}, 'Salsa Aparte')" class="py-1.5 rounded text-[11px] font-bold transition ${item.modo === 'Salsa Aparte' ? 'bg-[#e8332a] text-white' : 'bg-[#18140f] border border-[#35291f] text-zinc-400 hover:border-[#e8332a]/50'}">Aparte</button>
@@ -777,45 +774,18 @@
       `).join('');
     }
 
-    function actualizarSalsaSabor(index, valor) {
-      if (seleccionesSalsas[index]) seleccionesSalsas[index].nombre = valor;
-    }
-
-    function actualizarSalsaModo(index, modo) {
-      if (seleccionesSalsas[index]) {
-        seleccionesSalsas[index].modo = modo;
-        renderizarFilasSalsas();
-      }
-    }
-
-    function cerrarModalSalsas() {
-      document.getElementById('modal-salsas').classList.add('hidden');
-      productoTemp = null;
-    }
-
-    function confirmarAgregarConSalsas() {
-      if (!productoTemp) return;
-      agregarDirectoAlCarrito(productoTemp, seleccionesSalsas);
-      cerrarModalSalsas();
-    }
+    function actualizarSalsaSabor(index, valor) { if (seleccionesSalsas[index]) seleccionesSalsas[index].nombre = valor; }
+    function actualizarSalsaModo(index, modo) { if (seleccionesSalsas[index]) { seleccionesSalsas[index].modo = modo; renderizarFilasSalsas(); } }
+    function cerrarModalSalsas() { document.getElementById('modal-salsas').classList.add('hidden'); productoTemp = null; }
+    function confirmarAgregarConSalsas() { if (!productoTemp) return; agregarDirectoAlCarrito(productoTemp, seleccionesSalsas); cerrarModalSalsas(); }
 
     function agregarDirectoAlCarrito(producto, listaSalsas) {
       const salsasStr = listaSalsas.map(s => `${s.nombre}(${s.modo})`).join('+');
       const claveUnica = `${producto.id}_${salsasStr}`;
       const itemExistente = carrito.find(item => item.claveUnica === claveUnica);
 
-      if (itemExistente) {
-        itemExistente.cantidad++;
-      } else {
-        carrito.push({
-          claveUnica: claveUnica,
-          id: producto.id,
-          nombre: producto.nombre,
-          precio: parseFloat(producto.precio),
-          salsas: listaSalsas,
-          cantidad: 1
-        });
-      }
+      if (itemExistente) { itemExistente.cantidad++; } 
+      else { carrito.push({ claveUnica: claveUnica, id: producto.id, nombre: producto.nombre, precio: parseFloat(producto.precio), salsas: listaSalsas, cantidad: 1 }); }
       actualizarCarritoUI();
     }
 
@@ -833,21 +803,15 @@
       document.getElementById('cliente-nombre').value = '';
       document.getElementById('cliente-celular').value = '';
       document.getElementById('pedido-nota').value = '';
-      document.querySelectorAll('.pago-btn').forEach(btn => {
-        btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1";
-      });
-      document.querySelectorAll('.consumo-btn').forEach(btn => {
-        btn.className = "consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5";
-      });
+      document.querySelectorAll('.pago-btn').forEach(btn => { btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1"; });
+      document.querySelectorAll('.consumo-btn').forEach(btn => { btn.className = "consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5"; });
       lucide.createIcons();
       actualizarCarritoUI();
     }
 
     function seleccionarPago(metodo) {
       metodoPagoSeleccionado = metodo;
-      document.querySelectorAll('.pago-btn').forEach(btn => {
-        btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1";
-      });
+      document.querySelectorAll('.pago-btn').forEach(btn => { btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1"; });
       const btnActivo = document.getElementById(`btn-pago-${metodo}`);
       if (btnActivo) btnActivo.className = "pago-btn bg-gradient-to-b from-[#f2a93b] to-[#c9821e] border border-transparent py-2 rounded-lg text-xs font-bold text-[#1a1208] transition flex flex-col items-center gap-1 shadow-lg shadow-[#f2a93b]/20";
       lucide.createIcons();
@@ -856,9 +820,7 @@
 
     function seleccionarTipoConsumo(tipo) {
       tipoConsumoSeleccionado = tipo;
-      document.querySelectorAll('.consumo-btn').forEach(btn => {
-        btn.className = "consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5";
-      });
+      document.querySelectorAll('.consumo-btn').forEach(btn => { btn.className = "consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5"; });
       const btnActivo = document.getElementById(`btn-consumo-${tipo}`);
       if (btnActivo) btnActivo.className = "consumo-btn bg-gradient-to-b from-[#f2a93b] to-[#c9821e] border border-transparent py-2 rounded-lg text-xs font-bold text-[#1a1208] transition flex items-center justify-center gap-1.5 shadow-lg shadow-[#f2a93b]/20";
       lucide.createIcons();
@@ -949,15 +911,7 @@
       lucide.createIcons();
 
       const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-      
-      const detalleTexto = carrito.map(i => {
-        let especSalsas = '';
-        if (i.salsas && i.salsas.length > 0) {
-          especSalsas = ' [' + i.salsas.map(s => `${s.nombre} (${s.modo})`).join(', ') + ']';
-        }
-        return `${i.cantidad}x ${i.nombre}${especSalsas}`;
-      }).join(' | ');
-
+      const detalleTexto = carrito.map(i => `${i.cantidad}x ${i.nombre}${i.salsas && i.salsas.length > 0 ? ' [' + i.salsas.map(s => `${s.nombre} (${s.modo})`).join(', ') + ']' : ''}`).join(' | ');
       const etiquetaTipoConsumo = ETIQUETA_TIPO_CONSUMO[tipoConsumoSeleccionado] || tipoConsumoSeleccionado;
 
       const datosVenta = {
@@ -971,32 +925,19 @@
       };
 
       try {
-        // Petición con control de Timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(datosVenta),
-          signal: controller.signal
-        });
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(datosVenta), signal: controller.signal });
         clearTimeout(timeoutId);
-
         const respuesta = await response.json();
         
-        if (respuesta.exito) {
-          mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
-        } else {
-          alert('Error al guardar la venta: ' + respuesta.error);
-        }
+        if (respuesta.exito) { mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido); } 
+        else { alert('Error al guardar la venta: ' + respuesta.error); }
       } catch (err) {
         console.error(err);
-        // Generar un ID local temporal si falla la conexión
         const idLocal = 'RW-LOC-' + Math.floor(Math.random() * 8999 + 1000);
         mostrarComandaCocinaModal(idLocal, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
-      } finally {
-        validarFormularioVenta();
-      }
+      } finally { validarFormularioVenta(); }
     }
 
     function mostrarComandaCocinaModal(idVenta, totalBs, cliente, celular, tipoConsumo, nota) {
@@ -1012,9 +953,7 @@
       if (nota) {
         document.getElementById('ticket-nota').innerText = nota;
         notaContainer.classList.remove('hidden');
-      } else {
-        notaContainer.classList.add('hidden');
-      }
+      } else { notaContainer.classList.add('hidden'); }
 
       const detallesContainer = document.getElementById('ticket-detalles');
       detallesContainer.innerHTML = carrito.map(i => `
@@ -1040,14 +979,55 @@
       lucide.createIcons();
     }
 
-    // Adaptador de Impresión: Detecta si está en app nativa o navegador
-    function imprimirComanda() { 
-      if (window.Capacitor && window.Capacitor.isPluginAvailable('BluetoothPrinter')) {
-        // Llamada a plugin de Bluetooth para impresoras POS
-        alert("Enviando comanda a la impresora Bluetooth de cocina...");
-      } else {
-        window.print(); 
+    // Impresión de la comanda. Se usa el diálogo de impresión nativo del sistema
+    // (window.print) porque es lo que garantiza compatibilidad con CUALQUIER
+    // impresora que el usuario tenga instalada/emparejada en el dispositivo
+    // (térmica de 80mm, Bluetooth, USB, WiFi, etc.), sin depender de un modelo
+    // o SDK de impresora específico.
+    function imprimirComanda() {
+      const ticket = document.getElementById('ticket-cocina');
+      if (!ticket) return;
+
+      // Detecta si la app corre "instalada" como PWA (standalone). En ese modo,
+      // en algunos WebView de Android, window.print() puede no disparar el
+      // diálogo del sistema. Como respaldo, se abre el ticket en una ventana
+      // aparte e imprime desde ahí.
+      const esStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      if (!esStandalone) {
+        // Camino normal: imprimir directamente la app.
+        window.print();
+        return;
       }
+
+      const ventanaImpresion = window.open('', '_blank');
+      if (!ventanaImpresion) {
+        // Si el navegador bloqueó la ventana emergente, se intenta igual con print directo.
+        window.print();
+        return;
+      }
+
+      ventanaImpresion.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Comanda</title>
+            <style>
+              @page { size: 80mm auto; margin: 0; }
+              * { box-sizing: border-box; font-family: 'Inter', Arial, sans-serif; }
+              body { margin: 0; padding: 2mm 3mm 4mm; width: 80mm; color: #000; font-size: 12px; }
+            </style>
+          </head>
+          <body>${ticket.innerHTML}</body>
+        </html>
+      `);
+      ventanaImpresion.document.close();
+      ventanaImpresion.onload = () => {
+        ventanaImpresion.focus();
+        ventanaImpresion.print();
+        ventanaImpresion.close();
+      };
     }
 
     function cerrarComanda() {
