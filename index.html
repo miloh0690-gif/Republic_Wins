@@ -1,650 +1,1731 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Control Comercial Multi-Sucursal</title>
-    <!-- Tailwind CSS CDN para un diseño ejecutivo moderno -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Estilos personalizados para animaciones y transiciones suave */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Republic Wings - POS & Dashboard</title>
+  <!-- Tailwind CSS para interfaz responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Iconos Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tipografía de marca -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0c0b0a;
+      --surface: #18140f;
+      --surface-2: #221c15;
+      --line: #35291f;
+      --red: #e8332a;
+      --red-dark: #a61e1e;
+      --amber: #f2a93b;
+      --hot: #ff7a1a;
+      --cream: #f5efe4;
+      --muted: #a69a8a;
+    }
+
+    * { font-family: 'Inter', sans-serif; }
+    .font-display { font-family: 'Anton', sans-serif; letter-spacing: 0.03em; }
+    .font-mono-brand { font-family: 'JetBrains Mono', monospace; }
+
+    body { background-color: var(--bg); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #4a3626; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red-dark); }
+
+    /* Textura sutil de fondo tipo parrilla */
+    .grill-texture {
+      background-image:
+        repeating-linear-gradient(135deg, rgba(232,51,42,0.035) 0px, rgba(232,51,42,0.035) 1px, transparent 1px, transparent 26px);
+    }
+
+    .ember-glow { box-shadow: 0 0 0 1px rgba(242,169,59,0.15), 0 12px 30px -12px rgba(232,51,42,0.45); }
+
+    .cat-pill { transition: all .18s ease; }
+    .cat-pill:hover { transform: translateY(-1px); }
+
+    .product-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .product-card:hover { transform: translateY(-3px); border-color: rgba(242,169,59,0.5); box-shadow: 0 16px 32px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(232,51,42,0.25); }
+
+    .brand-input:focus { border-color: var(--amber) !important; box-shadow: 0 0 0 3px rgba(242,169,59,0.15); }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .55; }
+    }
+    .flame-pulse { animation: flicker 1.8s ease-in-out infinite; }
+
+    /* Ticket de cocina estilo recibo, con borde dentado */
+    .receipt-edge-top, .receipt-edge-bottom {
+      height: 12px;
+      width: 100%;
+      background-image: radial-gradient(circle at 8px 0, transparent 8px, #ffffff 8.5px);
+      background-size: 16px 16px;
+      background-repeat: repeat-x;
+    }
+    .receipt-edge-bottom { transform: rotate(180deg); }
+
+    /* Formato de impresión para comanda de cocina */
+    @media print {
+      body * { visibility: hidden; }
+      #ticket-cocina, #ticket-cocina * { visibility: visible; }
+      #ticket-cocina { position: absolute; left: 0; top: 0; width: 100%; color: black !important; }
+      .no-print { display: none !important; }
+    }
+
+    /* ===== RESPONSIVE: altura real de viewport en móviles (evita recortes por barra de navegador) ===== */
+    .app-shell { height: 100vh; height: 100dvh; }
+
+    /* ===== RESPONSIVE: panel de orden (carrito) =====
+       Por defecto (móvil/tablet, <1024px) el panel está oculto y solo aparece
+       como overlay a pantalla completa cuando se activa con .cart-open.
+       Desde 1024px (lg) vuelve a ser el panel lateral fijo original. */
+    #cart-section {
+      display: none;
+    }
+    #cart-section.cart-open {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      width: 100%;
+      animation: slideUpCart .22s ease-out;
+    }
+    @keyframes slideUpCart {
+      from { transform: translateY(16px); opacity: .4; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @media (min-width: 1024px) {
+      #cart-section,
+      #cart-section.cart-open {
+        display: flex !important;
+        position: static !important;
+        inset: auto !important;
+        z-index: auto !important;
+        width: 24rem !important;
+        animation: none !important;
+      }
+      #cart-mobile-close { display: none !important; }
+      #fab-carrito { display: none !important; }
+    }
+
+    /* Botón flotante para abrir el carrito en móvil/tablet */
+    #fab-carrito {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 30;
+    }
+
+    /* ===== NUEVO: pantalla de selección de sucursal ===== */
+    .sucursal-card { transition: all .18s ease; }
+    .sucursal-card:hover { transform: translateY(-4px); border-color: rgba(242,169,59,0.55); box-shadow: 0 18px 36px -16px rgba(0,0,0,0.7), 0 0 0 1px rgba(232,51,42,0.25); }
+
+    /* Badge de sucursal activa en el encabezado */
+    .badge-sucursal {
+      background: linear-gradient(180deg, rgba(242,169,59,0.14), rgba(242,169,59,0.05));
+      border: 1px solid rgba(242,169,59,0.35);
+      color: var(--amber);
+    }
+
+    /* Botón de icono pequeño en encabezado (dueño / dev / cambiar sucursal) */
+    .header-icon-btn {
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      transition: all .15s ease;
+    }
+    .header-icon-btn:hover { color: var(--cream); border-color: rgba(242,169,59,0.5); }
+
+    /* Interruptor de disponibilidad (toggle) para modo desarrollador */
+    .switch-disponible { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .switch-disponible input { opacity: 0; width: 0; height: 0; }
+    .switch-slider { position: absolute; cursor: pointer; inset: 0; background-color: #35291f; transition: .2s; border-radius: 999px; }
+    .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #a69a8a; transition: .2s; border-radius: 50%; }
+    .switch-disponible input:checked + .switch-slider { background-color: #2f6e46; }
+    .switch-disponible input:checked + .switch-slider:before { transform: translateX(18px); background-color: #f5efe4; }
+
+    /* Producto agotado / no disponible en la grilla del POS */
+    .product-card.agotado { opacity: .45; filter: grayscale(60%); cursor: not-allowed; }
+    .product-card.agotado:hover { transform: none; box-shadow: none; border-color: var(--line); }
+
+    /* Input numérico de precio en modo desarrollador */
+    .precio-dev-input { width: 90px; }
+  </style>
+  <!-- Enlace al Manifiesto PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <!-- Color de la barra de estado en dispositivos móviles -->
+  <meta name="theme-color" content="#000000">
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="app-shell bg-[#0c0b0a] text-zinc-100 flex flex-col overflow-hidden">
 
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
-    <nav class="bg-slate-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <span class="text-2xl font-bold text-blue-400">POS Master Pro</span>
-                <span id="label-sucursal-actual" class="bg-blue-600 text-xs px-2 py-1 rounded-full uppercase font-semibold">Sin Sesión</span>
-            </div>
-            <div id="nav-buttons" class="hidden flex items-center space-x-3">
-                <button onclick="cambiarTab('pos')" class="px-3 py-1.5 rounded hover:bg-slate-800 text-sm font-medium">Punto de Venta</button>
-                <button onclick="solicitarAcceso('inventario')" class="px-3 py-1.5 rounded hover:bg-slate-800 text-sm font-medium">Inventario Sodas</button>
-                <button onclick="solicitarAcceso('dev')" class="px-3 py-1.5 rounded hover:bg-slate-800 text-sm font-medium">Modo Desarrollador</button>
-                <button onclick="solicitarAcceso('resumen')" class="bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded text-sm font-semibold text-white">Resumen Dueño</button>
-                <button onclick="cerrarSesion()" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-sm font-medium">Cerrar Sesión</button>
-            </div>
+  <!-- ===== NUEVO: PANTALLA DE SELECCIÓN DE SUCURSAL (bloquea el acceso hasta autenticar) ===== -->
+  <div id="pantalla-sucursal" class="fixed inset-0 z-[60] bg-[#0c0b0a] grill-texture flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-3xl py-8">
+      <div class="text-center mb-8">
+        <div class="flex items-center justify-center gap-2 bg-[#18140f] border border-[#3a2418] px-4 py-2 rounded-lg ember-glow inline-flex mb-4">
+          <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a] flame-pulse"></i>
+          <span class="font-display text-xl leading-none text-white">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
         </div>
-    </nav>
+        <h1 class="font-display text-2xl sm:text-3xl text-white tracking-wide">SELECCIONE SU SUCURSAL</h1>
+        <p class="text-xs sm:text-sm text-[#a69a8a] mt-2">Cada sucursal tiene su propio acceso protegido con contraseña</p>
+      </div>
+      <div id="grid-sucursales" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+      <div class="text-center mt-8">
+        <button onclick="solicitarAccesoDueño()" class="text-[#f2a93b] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 hover:text-white transition">
+          <i data-lucide="crown" class="w-3.5 h-3.5"></i> Soy el Dueño — Ver Resumen General
+        </button>
+      </div>
+    </div>
+  </div>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <main class="max-w-7xl mx-auto p-4 md:p-6">
+  <!-- ===== NUEVO: PANEL DEL DUEÑO (resumen general y por sucursal, acceso único con contraseña) ===== -->
+  <div id="pantalla-dueño" class="fixed inset-0 z-[55] bg-[#0c0b0a] grill-texture hidden flex-col overflow-hidden">
+    <header class="bg-gradient-to-r from-[#150c0a] via-[#1a0d0a] to-[#0c0b0a] border-b border-[#3a2418] px-4 sm:px-6 py-3 flex justify-between items-center shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-[#f2a93b]/10 border border-[#f2a93b]/30 flex items-center justify-center">
+          <i data-lucide="crown" class="text-[#f2a93b] w-4.5 h-4.5"></i>
+        </div>
+        <div>
+          <h1 class="font-display text-lg sm:text-xl text-white tracking-wide leading-none">PANEL DEL DUEÑO</h1>
+          <p class="text-[10px] text-[#a69a8a] mt-0.5">Visión general de las 3 sucursales</p>
+        </div>
+      </div>
+      <button onclick="salirDePanelDueño()" class="header-icon-btn"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </header>
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h2 class="font-display text-xl text-white tracking-wide">RESUMEN CONSOLIDADO</h2>
+        <div class="flex bg-[#18140f] p-1 rounded-lg border border-[#2a2019]">
+          <button onclick="filtrarResumenDueño('HOY')" id="btn-dueño-filtro-HOY" class="btn-dueño-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
+          <button onclick="filtrarResumenDueño('SEMANA')" id="btn-dueño-filtro-SEMANA" class="btn-dueño-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
+          <button onclick="filtrarResumenDueño('MES')" id="btn-dueño-filtro-MES" class="btn-dueño-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Este Mes</button>
+        </div>
+      </div>
 
-        <!-- 1. PANTALLA DE SELECCIÓN DE SUCURSAL Y LOGIN -->
-        <section id="sec-login" class="max-w-md mx-auto mt-12 bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-            <h2 class="text-xl font-bold text-center text-slate-800 mb-6">Acceso a Sucursales</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Seleccione Sucursal:</label>
-                    <select id="select-sucursal" class="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="Villa Victoria">Villa Victoria</option>
-                        <option value="Villa Copacabana">Villa Copacabana</option>
-                        <option value="Tembladerani">Tembladerani</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña de Sucursal:</label>
-                    <input type="password" id="input-pass-sucursal" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******">
-                </div>
-                <button onclick="iniciarSesionSucursal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all">Ingresar al Sistema</button>
+      <!-- KPIs GLOBALES -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f2a93b] to-[#ff7a1a]"></div>
+          <p class="text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider mb-2">Total Facturado (Todas las Sucursales)</p>
+          <h3 id="dueño-kpi-total-ingresos" class="font-display text-4xl text-[#f2a93b] tracking-wide">0.00 Bs</h3>
+        </div>
+        <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e8332a] to-[#a61e1e]"></div>
+          <p class="text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider mb-2">Total Pedidos (Todas las Sucursales)</p>
+          <h3 id="dueño-kpi-total-pedidos" class="font-display text-4xl text-white tracking-wide">0</h3>
+        </div>
+      </div>
+
+      <!-- DESGLOSE POR SUCURSAL -->
+      <div>
+        <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-[#e8332a]"></i> Desglose por Sucursal</h3>
+        <div id="tarjetas-sucursales-dueño" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENCABEZADO PRINCIPAL DE LA APLICACIÓN -->
+  <header class="relative bg-gradient-to-r from-[#150c0a] via-[#1a0d0a] to-[#0c0b0a] border-b border-[#3a2418] px-3 sm:px-6 py-2.5 sm:py-3 flex justify-between items-center shrink-0 overflow-hidden">
+    <div class="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[#f2a93b] to-transparent opacity-70"></div>
+    <div class="flex items-center gap-2 sm:gap-3 relative z-10 min-w-0">
+      <div class="flex items-center gap-2 bg-[#0c0b0a] border border-[#3a2418] px-2.5 sm:px-3 py-1.5 rounded-lg ember-glow shrink-0">
+        <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7a1a] flame-pulse"></i>
+        <span class="font-display text-base sm:text-xl leading-none text-white whitespace-nowrap">REPUBLIC <span class="text-[#e8332a]">WINGS</span></span>
+      </div>
+      <span class="hidden md:inline text-[10px] font-mono-brand tracking-wider bg-[#18140f] text-[#a69a8a] px-2 py-1 rounded border border-[#35291f] uppercase whitespace-nowrap">POS v4.0 · Multi-Sucursal</span>
+      <span id="badge-sucursal-activa" class="badge-sucursal hidden items-center gap-1.5 text-[10px] sm:text-xs font-bold px-2.5 py-1.5 rounded-lg uppercase tracking-wide whitespace-nowrap">
+        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> <span id="badge-sucursal-nombre">--</span>
+      </span>
+    </div>
+    <div class="flex items-center gap-2 sm:gap-3 relative z-10 shrink-0">
+      <div class="text-right">
+        <p id="clock" class="text-xs sm:text-sm font-mono-brand text-[#f2a93b] tracking-widest">00:00:00</p>
+        <p class="hidden sm:flex text-[11px] text-emerald-400 items-center justify-end gap-1.5 mt-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Línea
+        </p>
+      </div>
+      <div class="flex items-center gap-1.5 border-l border-[#2a2019] pl-2 sm:pl-3">
+        <button onclick="solicitarAccesoDesarrollador()" title="Modo Desarrollador" class="header-icon-btn">
+          <i data-lucide="terminal" class="w-4 h-4"></i>
+        </button>
+        <button onclick="solicitarAccesoDueño()" title="Panel del Dueño" class="header-icon-btn">
+          <i data-lucide="crown" class="w-4 h-4"></i>
+        </button>
+        <button id="btn-cambiar-sucursal" onclick="cambiarSucursal()" title="Cambiar Sucursal" class="header-icon-btn hidden">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CUERPO DEL POS -->
+  <main class="flex-1 flex overflow-hidden">
+
+    <!-- SECCIÓN IZQUIERDA: MENÚ / DASHBOARD -->
+    <section class="flex-1 flex flex-col border-r border-[#2a2019] bg-[#0c0b0a] overflow-hidden grill-texture">
+
+      <!-- BARRA DE NAVEGACIÓN Y CATEGORÍAS -->
+      <div id="category-bar" class="p-3 sm:p-4 bg-[#120f0c]/70 border-b border-[#2a2019] flex gap-2 overflow-x-auto shrink-0">
+        <!-- Renderizado dinámicamente incluyendo el botón RESUMEN -->
+      </div>
+
+      <!-- VISTA 1: REJILLA DE PRODUCTOS (POS) -->
+      <div id="vista-pos" class="flex-1 p-3 sm:p-4 overflow-y-auto pb-24 lg:pb-4">
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="col-span-full flex flex-col items-center justify-center py-20 text-[#a69a8a] gap-3">
+            <div class="w-8 h-8 border-4 border-[#e8332a] border-t-transparent rounded-full animate-spin"></div>
+            <p class="font-display tracking-wide text-sm">CARGANDO MENÚ...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA 2: DASHBOARD DE RESUMEN DE VENTAS (GERENCIAL) -->
+      <div id="vista-resumen" class="flex-1 p-4 sm:p-6 overflow-y-auto hidden space-y-6 pb-24 lg:pb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#18140f] p-4 rounded-xl border border-[#2a2019]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-[#f2a93b]/10 border border-[#f2a93b]/30 flex items-center justify-center shrink-0">
+              <i data-lucide="bar-chart-3" class="text-[#f2a93b] w-5 h-5"></i>
             </div>
-        </section>
-
-        <!-- 2. PUNTO DE VENTA (POS) -->
-        <section id="tab-pos" class="tab-content">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Catálogo de Productos -->
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
-                    <h3 class="text-lg font-bold mb-4 text-slate-800">Catálogo de Productos</h3>
-                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <!-- Generado dinámicamente -->
-                    </div>
-                </div>
-
-                <!-- Carrito / Detalle de Venta -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-lg font-bold mb-4 text-slate-800">Orden Actual</h3>
-                        <div id="lista-carrito" class="space-y-2 max-h-80 overflow-y-auto mb-4 border-b pb-4">
-                            <p class="text-gray-400 text-sm text-center py-4">No hay productos seleccionados</p>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center text-xl font-bold mb-4">
-                            <span>Total:</span>
-                            <span id="total-venta" class="text-blue-600">Bs. 0.00</span>
-                        </div>
-                        <button onclick="procesarVenta()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow transition-all">Completar Venta</button>
-                    </div>
-                </div>
+            <div>
+              <h2 class="font-display text-2xl text-white tracking-wide leading-none">RESUMEN GERENCIAL</h2>
+              <p class="text-xs text-[#a69a8a] mt-1">Métricas acumuladas de pedidos y facturación</p>
             </div>
-        </section>
+          </div>
 
-        <!-- 3. INVENTARIO DE SODAS -->
-        <section id="tab-inventario" class="tab-content">
-            <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
-                <h3 class="text-lg font-bold mb-4 text-slate-800">Control de Inventario de Sodas</h3>
-                
-                <!-- Formulario para agregar stock -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Soda/Bebida:</label>
-                        <select id="select-soda-inv" class="w-full border rounded p-2 text-sm bg-white"></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Cantidad a Agregar:</label>
-                        <input type="number" id="input-cant-inv" min="1" class="w-full border rounded p-2 text-sm" placeholder="Ej. 24">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="agregarStockSoda()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm">Añadir al Stock</button>
-                    </div>
-                </div>
+          <!-- FILTROS TEMPORALES -->
+          <div class="flex bg-[#0c0b0a] p-1 rounded-lg border border-[#2a2019]">
+            <button onclick="filtrarResumen('HOY')" id="btn-filtro-HOY" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
+            <button onclick="filtrarResumen('SEMANA')" id="btn-filtro-SEMANA" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
+            <button onclick="filtrarResumen('MES')" id="btn-filtro-MES" class="btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Este Mes</button>
+          </div>
+        </div>
 
-                <!-- Tabla de inventario actual -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-xs font-bold text-gray-600 uppercase border-b">
-                                <th class="p-3">Producto</th>
-                                <th class="p-3">Stock Disponible</th>
-                                <th class="p-3">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-inventario-body" class="text-sm divide-y">
-                            <!-- Contenido dinámico -->
-                        </tbody>
-                    </table>
-                </div>
+        <!-- TARJETAS DE INDICADORES (KPIs) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f2a93b] to-[#ff7a1a]"></div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider">Total Facturado</p>
+              <div class="w-8 h-8 rounded-lg bg-[#f2a93b]/10 flex items-center justify-center">
+                <i data-lucide="banknote" class="w-4 h-4 text-[#f2a93b]"></i>
+              </div>
             </div>
-
-            <!-- Reporte de ventas filtrado -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 class="text-lg font-bold mb-4 text-slate-800">Reporte de Ventas de Sodas</h3>
-                <div class="flex flex-wrap items-center gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs text-gray-500">Desde:</label>
-                        <input type="date" id="fecha-inicio-rep" class="border rounded p-1.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500">Hasta:</label>
-                        <input type="date" id="fecha-fin-rep" class="border rounded p-1.5 text-sm">
-                    </div>
-                    <button onclick="generarReporteSodas()" class="mt-4 bg-slate-800 text-white px-4 py-2 rounded text-sm hover:bg-slate-700">Generar Reporte</button>
-                </div>
-                <div id="resultado-reporte-sodas" class="text-sm text-gray-700">
-                    <p class="text-gray-400">Seleccione un rango de fechas para consultar.</p>
-                </div>
+            <h3 id="kpi-total-ingresos" class="font-display text-4xl text-[#f2a93b] tracking-wide">0.00 Bs</h3>
+          </div>
+          <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e8332a] to-[#a61e1e]"></div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[11px] font-bold text-[#a69a8a] uppercase tracking-wider">Total Pedidos</p>
+              <div class="w-8 h-8 rounded-lg bg-[#e8332a]/10 flex items-center justify-center">
+                <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i>
+              </div>
             </div>
-        </section>
+            <h3 id="kpi-total-pedidos" class="font-display text-4xl text-white tracking-wide">0</h3>
+          </div>
+        </div>
 
-        <!-- 4. MODO DESARROLLADOR (EDICIÓN DE PRECIOS Y DISPONIBILIDAD) -->
-        <section id="tab-dev" class="tab-content">
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 class="text-lg font-bold mb-2 text-slate-800">Ventana de Desarrollador - Configuración de Precios</h3>
-                <p class="text-sm text-gray-500 mb-6">Ajuste precios y disponibilidad de productos para la sucursal activa.</p>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-xs font-bold text-gray-600 uppercase border-b">
-                                <th class="p-3">Producto</th>
-                                <th class="p-3">Precio (Bs.)</th>
-                                <th class="p-3">Disponibilidad</th>
-                                <th class="p-3">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-dev-body" class="text-sm divide-y">
-                            <!-- Contenido dinámico -->
-                        </tbody>
-                    </table>
-                </div>
+        <!-- TABLA DE PRODUCTOS MÁS VENDIDOS Y HISTORIAL -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- TOP PRODUCTOS -->
+          <div class="bg-[#18140f] p-4 rounded-xl border border-[#2a2019] flex flex-col">
+            <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2">
+              <i data-lucide="flame" class="w-4 h-4 text-[#e8332a]"></i> Desglose de Productos Vendidos
+            </h3>
+            <div class="flex-1 overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#0c0b0a] text-[#a69a8a] uppercase border-b border-[#2a2019]">
+                  <tr>
+                    <th class="p-2">Producto</th>
+                    <th class="p-2 text-center">Unid.</th>
+                    <th class="p-2 text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-top-productos" class="divide-y divide-[#2a2019]">
+                  <!-- Renderizado dinámico -->
+                </tbody>
+              </table>
             </div>
-        </section>
+          </div>
 
-        <!-- 5. RESUMEN GENERAL (SÓLO PARA EL DUEÑO) -->
-        <section id="tab-resumen" class="tab-content">
-            <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-800">Panel Ejecutivo de Control - Consolidado Global</h3>
-                        <p class="text-sm text-gray-500">Vista reservada exclusivamente para la dirección de la empresa.</p>
-                    </div>
-                    <span class="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full text-xs">Modo Administrador Máster</span>
-                </div>
-
-                <!-- Métricas Totales -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <span class="text-xs font-bold text-blue-600 uppercase">Ventas Totales Consolidadas</span>
-                        <div id="resumen-total-monto" class="text-2xl font-black text-blue-900 mt-1">Bs. 0.00</div>
-                    </div>
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
-                        <span class="text-xs font-bold text-green-600 uppercase">Total Transacciones</span>
-                        <div id="resumen-total-ventas" class="text-2xl font-black text-green-900 mt-1">0</div>
-                    </div>
-                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                        <span class="text-xs font-bold text-purple-600 uppercase">Sucursal Líder</span>
-                        <div id="resumen-sucursal-top" class="text-2xl font-black text-purple-900 mt-1">-</div>
-                    </div>
-                </div>
-
-                <h4 class="text-md font-bold mb-4 text-slate-700">Desglose Detallado por Sucursales</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="grid-resumen-sucursales">
-                    <!-- Renderizado dinámico de tarjetas por sucursal -->
-                </div>
+          <!-- HISTORIAL DE PEDIDOS -->
+          <div class="bg-[#18140f] p-4 rounded-xl border border-[#2a2019] flex flex-col">
+            <h3 class="font-bold text-sm text-zinc-200 mb-3 flex items-center gap-2">
+              <i data-lucide="receipt" class="w-4 h-4 text-[#e8332a]"></i> Historial de Ordenes
+            </h3>
+            <div class="flex-1 overflow-y-auto max-h-80">
+              <div id="lista-historial-pedidos" class="space-y-2">
+                <!-- Renderizado dinámico -->
+              </div>
             </div>
-        </section>
+          </div>
 
-    </main>
+        </div>
+      </div>
 
-    <!-- LÓGICA DE PROGRAMACIÓN EN JAVASCRIPT -->
-    <script>
-        // --- 1. BASE DE DATOS LOCAL Y CONFIGURACIÓN INICIAL ---
+      <!-- VISTA 3: MODO DESARROLLADOR (PRECIOS Y DISPONIBILIDAD) -->
+      <div id="vista-desarrollador" class="flex-1 p-4 sm:p-6 overflow-y-auto hidden space-y-5 pb-24 lg:pb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#18140f] p-4 rounded-xl border border-[#2a2019]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <i data-lucide="terminal" class="text-emerald-400 w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-display text-2xl text-white tracking-wide leading-none">MODO DESARROLLADOR</h2>
+              <p class="text-xs text-[#a69a8a] mt-1">Edita precios y disponibilidad del menú en tiempo real</p>
+            </div>
+          </div>
+          <button onclick="guardarCambiosDesarrollador()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg flex items-center gap-2 transition shrink-0">
+            <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
+          </button>
+        </div>
+        <div class="bg-[#18140f] rounded-xl border border-[#2a2019] overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#0c0b0a] text-[#a69a8a] uppercase border-b border-[#2a2019]">
+                <tr>
+                  <th class="p-3">Producto</th>
+                  <th class="p-3">Categoría</th>
+                  <th class="p-3">Precio (Bs)</th>
+                  <th class="p-3 text-center">Disponible</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-dev-productos" class="divide-y divide-[#2a2019]"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="text-[11px] text-[#6b5f52] flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Un producto marcado como "No disponible" desaparece del punto de venta hasta que se reactive aquí.</p>
+      </div>
+
+      <!-- VISTA 4: INVENTARIO DE BEBIDAS (SODAS) -->
+      <div id="vista-inventario" class="flex-1 p-4 sm:p-6 overflow-y-auto hidden space-y-5 pb-24 lg:pb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#18140f] p-4 rounded-xl border border-[#2a2019]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center shrink-0">
+              <i data-lucide="cup-soda" class="text-sky-400 w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="font-display text-2xl text-white tracking-wide leading-none">INVENTARIO DE BEBIDAS</h2>
+              <p class="text-xs text-[#a69a8a] mt-1">Stock, ventas y promedio por periodo</p>
+            </div>
+          </div>
+          <div class="flex bg-[#0c0b0a] p-1 rounded-lg border border-[#2a2019]">
+            <button onclick="filtrarInventario('HOY')" id="btn-inv-filtro-HOY" class="btn-inv-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white">Hoy</button>
+            <button onclick="filtrarInventario('SEMANA')" id="btn-inv-filtro-SEMANA" class="btn-inv-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Esta Semana</button>
+            <button onclick="filtrarInventario('MES')" id="btn-inv-filtro-MES" class="btn-inv-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition">Este Mes</button>
+          </div>
+        </div>
+        <div class="bg-[#18140f] rounded-xl border border-[#2a2019] overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#0c0b0a] text-[#a69a8a] uppercase border-b border-[#2a2019]">
+                <tr>
+                  <th class="p-3">Bebida</th>
+                  <th class="p-3 text-center">Stock Actual</th>
+                  <th class="p-3 text-center">Vendidas (periodo)</th>
+                  <th class="p-3 text-center">Promedio Diario</th>
+                  <th class="p-3 text-center">Reponer Stock</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-inventario-bebidas" class="divide-y divide-[#2a2019]"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN DERECHA: ORDEN Y DATOS DEL CLIENTE -->
+    <section id="cart-section" class="w-full lg:w-96 bg-[#120f0c] flex-col shrink-0 border-l border-[#2a2019]">
+      <div class="p-4 border-b border-[#2a2019] flex justify-between items-center bg-[#18140f] shrink-0">
+        <div class="flex items-center gap-2">
+          <button id="cart-mobile-close" onclick="cerrarCarritoMobile()" class="w-8 h-8 rounded-lg bg-[#0c0b0a] border border-[#35291f] flex items-center justify-center text-zinc-300 hover:text-white transition shrink-0">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <h2 class="font-display text-lg sm:text-xl text-white flex items-center gap-2 tracking-wide">
+            <span class="w-8 h-8 rounded-lg bg-[#e8332a]/10 border border-[#e8332a]/30 flex items-center justify-center shrink-0">
+              <i data-lucide="shopping-cart" class="w-4 h-4 text-[#e8332a]"></i>
+            </span> <span class="hidden sm:inline">ORDEN ACTUAL</span><span class="sm:hidden">ORDEN</span>
+          </h2>
+        </div>
+        <button onclick="vaciarCarrito()" class="text-xs text-[#a69a8a] hover:text-[#e8332a] transition flex items-center gap-1 shrink-0">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Vaciar
+        </button>
+      </div>
+
+      <!-- DATOS DEL CLIENTE -->
+      <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2 shrink-0">
+        <div>
+          <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NOMBRE / APELLIDO DEL CLIENTE</label>
+          <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NÚMERO DE CELULAR</label>
+          <input type="tel" id="cliente-celular" placeholder="Ej: 71234567" oninput="validarFormularioVenta()" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition">
+        </div>
+      </div>
+
+      <!-- NUEVO: TIPO DE PEDIDO (PARA LLEVAR / EN EL LOCAL) Y NOTA -->
+      <div class="p-3 bg-[#0c0b0a] border-b border-[#2a2019] space-y-2 shrink-0">
+        <div>
+          <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">TIPO DE PEDIDO</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="seleccionarTipoConsumo('LLEVAR')" id="btn-consumo-LLEVAR" class="consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5">
+              <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Para Llevar
+            </button>
+            <button type="button" onclick="seleccionarTipoConsumo('LOCAL')" id="btn-consumo-LOCAL" class="consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5">
+              <i data-lucide="utensils" class="w-3.5 h-3.5"></i> En el Local
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-[#a69a8a] mb-1 tracking-wide">NOTA DEL PEDIDO (OPCIONAL)</label>
+          <textarea id="pedido-nota" placeholder="Ej: Sin cebolla, extra servilletas, mesa 4..." rows="2" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none transition resize-none"></textarea>
+        </div>
+      </div>
+
+      <!-- DETALLE DE ELEMENTOS EN EL CARRITO -->
+      <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div class="text-center text-[#6b5f52] py-12 text-sm flex flex-col items-center gap-2">
+          <i data-lucide="utensils-crossed" class="w-8 h-8 opacity-40"></i>
+          No hay productos en la orden
+        </div>
+      </div>
+
+      <!-- PANEL DE TOTALES Y MÉTODOS DE PAGO -->
+      <div class="p-4 border-t border-[#2a2019] bg-[#0c0b0a] space-y-3 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div class="space-y-1 text-sm">
+          <div class="flex justify-between text-[#a69a8a]">
+            <span>Subtotal</span>
+            <span id="cart-subtotal">0.00 Bs</span>
+          </div>
+          <div class="flex justify-between items-baseline pt-2 border-t border-[#2a2019]">
+            <span class="text-sm font-bold text-zinc-300 uppercase tracking-wide">Total a Cobrar</span>
+            <span id="cart-total" class="font-display text-2xl text-[#e8332a]">0.00 Bs</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-[#a69a8a] mb-1 tracking-wide">MÉTODO DE PAGO</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="seleccionarPago('Efectivo')" id="btn-pago-Efectivo" class="pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1">
+              <i data-lucide="banknote" class="w-3.5 h-3.5"></i> Efectivo
+            </button>
+            <button onclick="seleccionarPago('Tarjeta')" id="btn-pago-Tarjeta" class="pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Tarjeta
+            </button>
+            <button onclick="seleccionarPago('QR')" id="btn-pago-QR" class="pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1">
+              <i data-lucide="qr-code" class="w-3.5 h-3.5"></i> QR / Transfer
+            </button>
+          </div>
+        </div>
+
+        <button id="btn-completar" onclick="procesarVenta()" disabled class="w-full bg-[#18140f] text-[#6b5f52] font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed border border-[#2a2019]">
+          <i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTÓN FLOTANTE: ABRIR ORDEN ACTUAL (solo móvil/tablet) -->
+  <button id="fab-carrito" onclick="abrirCarritoMobile()" class="hidden bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] text-white rounded-full shadow-2xl shadow-[#e8332a]/30 pl-4 pr-5 py-3 items-center gap-2.5 font-bold text-sm">
+    <span class="relative">
+      <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+      <span id="fab-carrito-badge" class="hidden absolute -top-2 -right-2 bg-[#1a1208] text-[#f2a93b] text-[10px] font-black rounded-full w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center border border-[#f2a93b]/40">0</span>
+    </span>
+    <span id="fab-carrito-total">Ver Orden</span>
+  </button>
+
+  <!-- MODAL DE AUTENTICACIÓN (CONTRASEÑA DE GERENTE) -->
+  <div id="modal-auth" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[70]">
+    <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-6 rounded-2xl max-w-xs w-full shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 bg-[#e8332a]/15 text-[#e8332a] rounded-full flex items-center justify-center mx-auto border border-[#e8332a]/30">
+        <i data-lucide="lock" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 id="auth-titulo" class="font-display text-xl text-white tracking-wide">ACCESO RESTRINGIDO</h3>
+        <p id="auth-subtitulo" class="text-xs text-[#a69a8a] mt-1">Ingrese la clave de administrador para ver reportes</p>
+      </div>
+      <div>
+        <input type="password" id="auth-password" placeholder="Contraseña" class="brand-input w-full bg-[#0c0b0a] border border-[#35291f] rounded-lg px-3 py-2 text-center text-sm text-white focus:outline-none transition">
+        <p id="auth-error" class="text-xs text-[#e8332a] mt-1 hidden">Contraseña incorrecta</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="cerrarAuthModal()" class="flex-1 bg-[#221c15] hover:bg-[#2a2019] text-zinc-300 font-bold py-2 rounded-lg text-xs transition">Cancelar</button>
+        <button onclick="validarPassword()" class="flex-1 bg-[#e8332a] hover:bg-[#c22a22] text-white font-bold py-2 rounded-lg text-xs shadow-lg shadow-[#e8332a]/20 transition">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MULTI-SALSA Y COMANDA -->
+  <div id="modal-salsas" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-[#18140f] border border-[#35291f] text-zinc-100 p-4 sm:p-6 rounded-2xl max-w-lg w-full shadow-2xl max-h-[90vh] max-h-[90dvh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-[#2a2019] pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="flame" class="w-5 h-5 text-[#ff7a1a]"></i>
+          <div>
+            <h3 id="modal-prod-nombre" class="font-display text-lg text-white tracking-wide">Configurar Producto</h3>
+            <p class="text-xs text-[#f2a93b] font-medium">Selección personalizada de salsas</p>
+          </div>
+        </div>
+        <button onclick="cerrarModalSalsas()" class="text-[#a69a8a] hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-[#a69a8a] mb-2 tracking-wide">¿CUÁNTAS SALSAS INCLUYE ESTE COMBO?</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button type="button" onclick="setCantidadSalsas(1)" id="btn-num-salsas-1" class="num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition">1 Salsa</button>
+          <button type="button" onclick="setCantidadSalsas(2)" id="btn-num-salsas-2" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">2 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(3)" id="btn-num-salsas-3" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">3 Salsas</button>
+          <button type="button" onclick="setCantidadSalsas(4)" id="btn-num-salsas-4" class="num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition">4 Salsas</button>
+        </div>
+      </div>
+      <div id="contenedor-filas-salsas" class="space-y-3 max-h-60 overflow-y-auto pr-1 mb-6"></div>
+      <button onclick="confirmarAgregarConSalsas()" class="w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-[#e8332a]/20 flex items-center justify-center gap-2">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar Producto a la Orden
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE COMANDA -->
+  <div id="modal-comanda" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="max-w-sm w-full">
+      <div class="receipt-edge-top"></div>
+      <div class="bg-white text-zinc-900 px-6 pt-2 pb-6 shadow-2xl" id="ticket-cocina">
+        <div class="text-center border-b-2 border-dashed border-zinc-300 pb-3 mb-3">
+          <h2 class="font-display text-3xl tracking-wide text-zinc-900">REPUBLIC <span class="text-[#e8332a]">WINGS</span></h2>
+          <p class="text-[11px] font-bold text-zinc-500 tracking-[0.2em] mt-0.5">*** COMANDA PARA COCINA ***</p>
+          <p id="ticket-id" class="text-xs font-mono-brand mt-2 text-zinc-700 font-bold">ID: RW-0000</p>
+          <p id="ticket-fecha" class="text-xs text-zinc-500 font-mono-brand">Fecha: --/--/----</p>
+        </div>
+        <div class="bg-zinc-100 p-2.5 rounded border border-zinc-300 mb-3 text-xs space-y-0.5">
+          <p><span class="font-bold">CLIENTE:</span> <span id="ticket-cliente-nombre" class="font-black uppercase">---</span></p>
+          <p><span class="font-bold">CELULAR:</span> <span id="ticket-cliente-celular" class="font-mono-brand">---</span></p>
+          <p><span class="font-bold">TIPO:</span> <span id="ticket-tipo-consumo" class="font-black uppercase">---</span></p>
+        </div>
+        <div id="ticket-nota-container" class="hidden bg-amber-50 border border-amber-300 rounded p-2 mb-3 text-xs">
+          <span class="font-black text-amber-800 uppercase">📝 Nota:</span> <span id="ticket-nota" class="text-amber-900 font-semibold"></span>
+        </div>
+        <div class="space-y-3 mb-4 text-sm font-semibold" id="ticket-detalles"></div>
+        <div class="border-t-2 border-dashed border-zinc-300 pt-3 flex justify-between items-baseline">
+          <span class="text-sm font-bold uppercase tracking-wide">Total:</span>
+          <span id="ticket-total" class="font-display text-2xl text-[#e8332a]">0.00 Bs</span>
+        </div>
+        <p class="text-center text-[10px] text-zinc-400 mt-4 tracking-wide">¡Gracias por su preferencia! 🔥</p>
+        <div class="mt-5 flex gap-2 no-print">
+          <button onclick="imprimirComanda()" class="flex-1 bg-[#e8332a] text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-[#c22a22] transition">
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comanda
+          </button>
+          <button onclick="cerrarComanda()" class="bg-zinc-200 text-zinc-800 font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-zinc-300 transition">
+            Cerrar
+          </button>
+        </div>
+      </div>
+      <div class="receipt-edge-bottom no-print"></div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ REEMPLAZA CON TU URL OFICIAL DE GOOGLE APPS SCRIPT
+    const API_URL = 'https://script.google.com/macros/s/AKfycby3XWOIt8zSEJLYzvcgHXhiUhWInAYqarlA63cZA77NW3-GF9G82QB_VGItG6upiCc-/exec';
+
+    const ORDEN_CATEGORIAS_OFICIAL = [
+      'TODOS',
+      'ALITAS',
+      'FINGERS',
+      'POLLO A LA CANASTA',
+      'ACOMPAÑAMIENTOS',
+      'BEBIDAS'
+    ];
+
+    // Icono lucide asociado a cada categoría para reforzar la identidad visual
+    const ICONO_CATEGORIA = {
+      'TODOS': 'layout-grid',
+      'ALITAS': 'flame',
+      'FINGERS': 'utensils',
+      'POLLO A LA CANASTA': 'shopping-basket',
+      'ACOMPAÑAMIENTOS': 'salad',
+      'BEBIDAS': 'cup-soda'
+    };
+
+    const LISTA_SALSAS = [
+      "Miel y Mostaza", "Barbacoa", "Jack Daniel's", "Blue Cheese", 
+      "Albahaca y Hierbas", "Hot Republic 🔥", "Bufallo Wild 🔥", 
+      "Extra Hot Republic (Bañado) 🔥🔥", "Ajo Parmesano (Bañado)", "Lemon Pepper (Bañado)"
+    ];
+
+    // Etiquetas legibles para el tipo de consumo
+    const ETIQUETA_TIPO_CONSUMO = {
+      'LLEVAR': 'Para Llevar',
+      'LOCAL': 'En el Local'
+    };
+
+    // CONFIGURACIÓN DE SEGURIDAD
+    const CONTRASEÑA_ADMIN = "admin123"; // 🔐 CAMBIA AQUÍ TU CONTRASEÑA DE GERENTE (acceso a Resumen e Inventario)
+    let estaAutenticado = false;
+
+    // ===== NUEVO: SUCURSALES =====
+    // 🔐 CAMBIA AQUÍ LAS CONTRASEÑAS DE CADA SUCURSAL. El "id" viaja al backend
+    // para que Google Sheets filtre/registre las ventas de cada local por separado.
+    const SUCURSALES = [
+      { id: 'VILLA_VICTORIA',   nombre: 'Villa Victoria',   clave: 'villavictoria26'  },
+      { id: 'VILLA_COPACABANA', nombre: 'Villa Copacabana', clave: 'copacabana26'     },
+      { id: 'TEMBLADERANI',     nombre: 'Tembladerani',     clave: 'tembladerani26'   }
+    ];
+    const CLAVE_DUEÑO = "duenio2026";       // 🔐 Acceso único al Panel del Dueño (todas las sucursales)
+    const CLAVE_DESARROLLADOR = "dev2026";  // 🔐 Acceso al Modo Desarrollador (precios y disponibilidad)
+
+    let sucursalActual = null;     // objeto de SUCURSALES una vez autenticado
+    let modoAuthActual = null;     // 'RESUMEN' | 'DEV' | 'INVENTARIO' | 'DUEÑO' | 'SUCURSAL'
+    let sucursalPendiente = null;  // sucursal que se está intentando desbloquear
+    let cambiosDevPendientes = {}; // { idProducto: { precio, disponible } }
+    let filtroInventarioActivo = 'HOY';
+    let filtroDueñoActivo = 'HOY';
+    let ventasDueñoPorSucursal = {}; // cache { idSucursal: [ventas...] }
+
+    let menuData = [];
+    let ventasData = [];
+    let carrito = [];
+    let metodoPagoSeleccionado = '';
+    let tipoConsumoSeleccionado = ''; // 'LLEVAR' o 'LOCAL'
+    let categoriaActiva = 'TODOS';
+    let filtroResumenActivo = 'HOY';
+    
+    let productoTemp = null;
+    let cantidadSalsasTemp = 1;
+    let seleccionesSalsas = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      iniciarReloj();
+      renderizarGridSucursales();
+      actualizarCarritoUI(); // deja el FAB en estado correcto desde el inicio
+    });
+
+    // ===================================================================
+    // ===== NUEVO: SELECCIÓN DE SUCURSAL Y CONTROL DE ACCESO =====
+    // ===================================================================
+
+    function renderizarGridSucursales() {
+      const cont = document.getElementById('grid-sucursales');
+      cont.innerHTML = SUCURSALES.map(s => `
+        <button onclick="pedirClaveSucursal('${s.id}')" class="sucursal-card bg-[#18140f] border border-[#2a2019] rounded-2xl p-6 text-center flex flex-col items-center gap-3">
+          <div class="w-14 h-14 rounded-xl bg-[#e8332a]/10 border border-[#e8332a]/30 flex items-center justify-center">
+            <i data-lucide="store" class="w-6 h-6 text-[#e8332a]"></i>
+          </div>
+          <span class="font-display text-lg text-white tracking-wide">${s.nombre.toUpperCase()}</span>
+          <span class="text-[11px] text-[#a69a8a] flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Requiere contraseña</span>
+        </button>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function pedirClaveSucursal(idSucursal) {
+      sucursalPendiente = SUCURSALES.find(s => s.id === idSucursal);
+      if (!sucursalPendiente) return;
+      modoAuthActual = 'SUCURSAL';
+      document.getElementById('auth-titulo').innerText = sucursalPendiente.nombre.toUpperCase();
+      document.getElementById('auth-subtitulo').innerText = 'Ingrese la contraseña de esta sucursal';
+      document.getElementById('auth-password').value = '';
+      document.getElementById('auth-error').classList.add('hidden');
+      document.getElementById('modal-auth').classList.remove('hidden');
+    }
+
+    function activarSucursal(sucursal) {
+      sucursalActual = sucursal;
+      sessionStorage.setItem('rw_sucursal_id', sucursal.id);
+      document.getElementById('pantalla-sucursal').classList.add('hidden');
+      document.getElementById('badge-sucursal-activa').classList.remove('hidden');
+      document.getElementById('badge-sucursal-activa').classList.add('flex');
+      document.getElementById('badge-sucursal-nombre').innerText = sucursal.nombre;
+      document.getElementById('btn-cambiar-sucursal').classList.remove('hidden');
+      estaAutenticado = false; // el acceso a Resumen/Dev/Inventario se pide de nuevo por sucursal
+      lucide.createIcons();
+      cargarMenu();
+    }
+
+    function cambiarSucursal() {
+      if (!confirm('¿Cerrar sesión de ' + (sucursalActual ? sucursalActual.nombre : 'esta sucursal') + ' y volver a la selección de sucursal?')) return;
+      sucursalActual = null;
+      estaAutenticado = false;
+      sessionStorage.removeItem('rw_sucursal_id');
+      document.getElementById('badge-sucursal-activa').classList.add('hidden');
+      document.getElementById('btn-cambiar-sucursal').classList.add('hidden');
+      document.getElementById('pantalla-sucursal').classList.remove('hidden');
+      mostrarVista('pos');
+    }
+
+    // ===== RESPONSIVE: control del panel de orden en móvil/tablet (<1024px) =====
+    function esVistaMovil() {
+      return window.innerWidth < 1024;
+    }
+
+    function abrirCarritoMobile() {
+      document.getElementById('cart-section').classList.add('cart-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarCarritoMobile() {
+      document.getElementById('cart-section').classList.remove('cart-open');
+      document.body.style.overflow = '';
+    }
+
+    function iniciarReloj() {
+      setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+      }, 1000);
+    }
+
+    async function cargarMenu() {
+      try {
+        // NUEVO: se envía la sucursal activa para que el backend pueda, si así se
+        // configura, servir precios/stock distintos por local. Si el backend aún
+        // no filtra por sucursal, simplemente ignora el parámetro sin romper nada.
+        const sucursalParam = sucursalActual ? `&sucursal=${encodeURIComponent(sucursalActual.id)}` : '';
+        const response = await fetch(`${API_URL}?action=getMenu${sucursalParam}`);
+        const data = await response.json();
+        if (data.error) { alert('Error en base de datos: ' + data.error); return; }
+        menuData = data;
+        renderizarCategorias();
+        filtrarCategoria('TODOS');
+      } catch (error) {
+        console.error('Error al conectar:', error);
+      }
+    }
+
+    function renderizarCategorias() {
+      const container = document.getElementById('category-bar');
+      let html = ORDEN_CATEGORIAS_OFICIAL.map(cat => {
+        const esActiva = (cat === categoriaActiva && !document.getElementById('vista-pos').classList.contains('hidden'));
+        const icono = ICONO_CATEGORIA[cat] || 'circle';
+        return `
+          <button onclick="filtrarCategoria('${cat}')" class="cat-pill ${esActiva ? 'bg-gradient-to-b from-[#e8332a] to-[#b91f1f] text-white border-transparent shadow-lg shadow-[#e8332a]/25' : 'bg-[#18140f] text-zinc-300 border-[#2a2019] hover:border-[#e8332a]/40 hover:text-white'} border px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap flex items-center gap-1.5">
+            <i data-lucide="${icono}" class="w-3.5 h-3.5"></i> ${cat}
+          </button>
+        `;
+      }).join('');
+
+      // Botón Especial de Resumen Gerencial
+      const esResumenActivo = !document.getElementById('vista-resumen').classList.contains('hidden');
+      html += `
+        <div class="w-px bg-[#2a2019] mx-1 shrink-0"></div>
+        <button onclick="solicitarAccesoResumen()" class="cat-pill px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-1.5 border ${esResumenActivo ? 'bg-gradient-to-b from-[#f2a93b] to-[#c9821e] text-[#1a1208] border-transparent shadow-lg shadow-[#f2a93b]/25' : 'bg-[#18140f] text-[#f2a93b] border-[#f2a93b]/30 hover:bg-[#221c15]'}">
+          <i data-lucide="bar-chart-2" class="w-4 h-4"></i> RESUMEN
+        </button>
+      `;
+
+      // NUEVO: Botón de Inventario de Bebidas
+      const esInventarioActivo = !document.getElementById('vista-inventario').classList.contains('hidden');
+      html += `
+        <button onclick="solicitarAccesoInventario()" class="cat-pill px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-1.5 border ${esInventarioActivo ? 'bg-gradient-to-b from-sky-400 to-sky-600 text-[#0c0b0a] border-transparent shadow-lg shadow-sky-500/25' : 'bg-[#18140f] text-sky-400 border-sky-500/30 hover:bg-[#221c15]'}">
+          <i data-lucide="cup-soda" class="w-4 h-4"></i> INVENTARIO
+        </button>
+      `;
+
+      // NUEVO: Botón de Modo Desarrollador
+      const esDevActivo = !document.getElementById('vista-desarrollador').classList.contains('hidden');
+      html += `
+        <button onclick="solicitarAccesoDesarrollador()" class="cat-pill px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-1.5 border ${esDevActivo ? 'bg-gradient-to-b from-emerald-400 to-emerald-600 text-[#0c0b0a] border-transparent shadow-lg shadow-emerald-500/25' : 'bg-[#18140f] text-emerald-400 border-emerald-500/30 hover:bg-[#221c15]'}">
+          <i data-lucide="terminal" class="w-4 h-4"></i> DEV
+        </button>
+      `;
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function abrirModalAuth(modo, titulo, subtitulo) {
+      modoAuthActual = modo;
+      document.getElementById('auth-titulo').innerText = titulo;
+      document.getElementById('auth-subtitulo').innerText = subtitulo;
+      document.getElementById('auth-password').value = '';
+      document.getElementById('auth-error').classList.add('hidden');
+      document.getElementById('modal-auth').classList.remove('hidden');
+    }
+
+    function solicitarAccesoResumen() {
+      if (estaAutenticado) { mostrarVista('resumen'); return; }
+      abrirModalAuth('RESUMEN', 'ACCESO RESTRINGIDO', 'Ingrese la clave de gerencia para ver reportes');
+    }
+
+    function solicitarAccesoDesarrollador() {
+      if (!sucursalActual) { alert('Primero ingrese a una sucursal.'); return; }
+      abrirModalAuth('DEV', 'MODO DESARROLLADOR', 'Ingrese la clave de desarrollador para editar precios');
+    }
+
+    function solicitarAccesoInventario() {
+      if (estaAutenticado) { mostrarVista('inventario'); return; }
+      abrirModalAuth('INVENTARIO', 'INVENTARIO DE BEBIDAS', 'Ingrese la clave de gerencia para ver el inventario');
+    }
+
+    function solicitarAccesoDueño() {
+      abrirModalAuth('DUEÑO', 'PANEL DEL DUEÑO', 'Ingrese la clave única del dueño');
+    }
+
+    function cerrarAuthModal() {
+      document.getElementById('modal-auth').classList.add('hidden');
+      sucursalPendiente = null;
+    }
+
+    function validarPassword() {
+      const pass = document.getElementById('auth-password').value;
+
+      if (modoAuthActual === 'SUCURSAL') {
+        if (sucursalPendiente && pass === sucursalPendiente.clave) {
+          cerrarAuthModal();
+          activarSucursal(sucursalPendiente);
+        } else {
+          document.getElementById('auth-error').classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (modoAuthActual === 'DUEÑO') {
+        if (pass === CLAVE_DUEÑO) {
+          cerrarAuthModal();
+          mostrarPanelDueño();
+        } else {
+          document.getElementById('auth-error').classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (modoAuthActual === 'DEV') {
+        if (pass === CLAVE_DESARROLLADOR) {
+          cerrarAuthModal();
+          mostrarVista('desarrollador');
+        } else {
+          document.getElementById('auth-error').classList.remove('hidden');
+        }
+        return;
+      }
+
+      // RESUMEN / INVENTARIO comparten la clave de gerencia
+      if (pass === CONTRASEÑA_ADMIN) {
+        estaAutenticado = true;
+        const destino = modoAuthActual === 'INVENTARIO' ? 'inventario' : 'resumen';
+        cerrarAuthModal();
+        mostrarVista(destino);
+      } else {
+        document.getElementById('auth-error').classList.remove('hidden');
+      }
+    }
+
+    // Oculta todas las vistas del panel izquierdo y muestra solo la solicitada.
+    // vistas válidas: 'pos' | 'resumen' | 'desarrollador' | 'inventario'
+    async function mostrarVista(vista) {
+      document.getElementById('vista-pos').classList.add('hidden');
+      document.getElementById('vista-resumen').classList.add('hidden');
+      document.getElementById('vista-desarrollador').classList.add('hidden');
+      document.getElementById('vista-inventario').classList.add('hidden');
+
+      if (vista === 'pos') {
+        document.getElementById('vista-pos').classList.remove('hidden');
+        renderizarCategorias();
+        return;
+      }
+      if (vista === 'resumen') {
+        document.getElementById('vista-resumen').classList.remove('hidden');
+        renderizarCategorias();
+        await cargarVentas();
+        return;
+      }
+      if (vista === 'desarrollador') {
+        document.getElementById('vista-desarrollador').classList.remove('hidden');
+        renderizarCategorias();
+        renderizarTablaDesarrollador();
+        return;
+      }
+      if (vista === 'inventario') {
+        document.getElementById('vista-inventario').classList.remove('hidden');
+        renderizarCategorias();
+        await cargarVentas();
+        filtrarInventario(filtroInventarioActivo);
+        return;
+      }
+    }
+
+    async function cargarVentas() {
+      try {
+        // NUEVO: filtra las ventas por la sucursal activa para que el Resumen
+        // Gerencial y el Inventario de esta sesión solo muestren su propio local.
+        const sucursalParam = sucursalActual ? `&sucursal=${encodeURIComponent(sucursalActual.id)}` : '';
+        const response = await fetch(`${API_URL}?action=getVentas${sucursalParam}`);
+        const data = await response.json();
+        ventasData = Array.isArray(data) ? data : [];
+        filtrarResumen(filtroResumenActivo);
+      } catch (err) {
+        console.error('Error al cargar ventas:', err);
+      }
+    }
+
+    function filtrarResumen(periodo) {
+      filtroResumenActivo = periodo;
+      
+      // Actualizar estilos de botones
+      ['HOY', 'SEMANA', 'MES'].forEach(p => {
+        const btn = document.getElementById(`btn-filtro-${p}`);
+        if (p === periodo) {
+          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white";
+        } else {
+          btn.className = "btn-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition";
+        }
+      });
+
+      const ahora = new Date();
+      
+      const ventasFiltradas = ventasData.filter(v => {
+        if (!v.fecha) return false;
+        const fechaVenta = new Date(v.fecha);
         
-        // Contraseñas de acceso
-        const CLAVES_SUCURSALES = {
-            "Villa Victoria": "vvic2026",
-            "Villa Copacabana": "vcop2026",
-            "Tembladerani": "tbld2026"
-        };
-        const CLAVE_DEV = "dev123";
-        const CLAVE_DUENO = "master2026";
-
-        // Estructura de productos por defecto
-        const PRODUCTOS_BASE = [
-            { id: 1, nombre: "Coca Cola 2L", categoria: "sodas", precio: 12, disponible: true, stock: 50 },
-            { id: 2, nombre: "Sprite 2L", categoria: "sodas", precio: 12, disponible: true, stock: 35 },
-            { id: 3, nombre: "Fanta 2L", categoria: "sodas", precio: 11, disponible: true, stock: 40 },
-            { id: 4, nombre: "Snack Papas Fritas", categoria: "varios", precio: 5, disponible: true, stock: 100 }
-        ];
-
-        // Estado global de la aplicación
-        let sucursalActiva = null;
-        let carrito = [];
-
-        // Inicialización del almacenamiento local (localStorage)
-        function inicializarBaseDatos() {
-            if (!localStorage.getItem('db_productos')) {
-                // Crear estructura por cada sucursal si no existe
-                const dbInicial = {
-                    "Villa Victoria": JSON.parse(JSON.stringify(PRODUCTOS_BASE)),
-                    "Villa Copacabana": JSON.parse(JSON.stringify(PRODUCTOS_BASE)),
-                    "Tembladerani": JSON.parse(JSON.stringify(PRODUCTOS_BASE))
-                };
-                localStorage.setItem('db_productos', JSON.stringify(dbInicial));
-            }
-            if (!localStorage.getItem('db_ventas')) {
-                localStorage.setItem('db_ventas', JSON.stringify([]));
-            }
+        if (periodo === 'HOY') {
+          return fechaVenta.toDateString() === ahora.toDateString();
+        } else if (periodo === 'SEMANA') {
+          const hace7Dias = new Date();
+          hace7Dias.setDate(ahora.getDate() - 7);
+          return fechaVenta >= hace7Dias;
+        } else if (periodo === 'MES') {
+          return fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear();
         }
+        return true;
+      });
 
-        // --- 2. CONTROL DE SESIÓN Y SEGURIDAD ---
+      // Calcular KPIs
+      const totalIngresos = ventasFiltradas.reduce((sum, v) => {
+        const monto = parseFloat(v.total.toString().replace(' Bs', '')) || 0;
+        return sum + monto;
+      }, 0);
 
-        function iniciarSesionSucursal() {
-            const sucursal = document.getElementById('select-sucursal').value;
-            const pass = document.getElementById('input-pass-sucursal').value;
+      document.getElementById('kpi-total-ingresos').innerText = `${totalIngresos.toFixed(2)} Bs`;
+      document.getElementById('kpi-total-pedidos').innerText = ventasFiltradas.length;
 
-            if (CLAVES_SUCURSALES[sucursal] === pass) {
-                sucursalActiva = sucursal;
-                document.getElementById('label-sucursal-actual').innerText = sucursal;
-                document.getElementById('sec-login').classList.add('hidden');
-                document.getElementById('nav-buttons').classList.remove('hidden');
-                document.getElementById('input-pass-sucursal').value = '';
-                
-                // Mostrar módulo inicial
-                cambiarTab('pos');
-            } else {
-                alert("Contraseña incorrecta para la sucursal " + sucursal);
+      // Desglose de Productos
+      const conteoProductos = {};
+      ventasFiltradas.forEach(v => {
+        if (v.detalle) {
+          const items = v.detalle.split(' | ');
+          items.forEach(itemStr => {
+            // Ejemplo: "2x Alitas (6 pcs) [Miel y Mostaza (Bañadas)]"
+            const match = itemStr.match(/^(\d+)x\s+([^\[]+)/);
+            if (match) {
+              const cant = parseInt(match[1]);
+              const prodNombre = match[2].trim();
+              
+              // Buscar precio base del producto
+              const prodObj = menuData.find(m => m.nombre.trim() === prodNombre);
+              const precioUni = prodObj ? parseFloat(prodObj.precio) : 0;
+
+              if (!conteoProductos[prodNombre]) {
+                conteoProductos[prodNombre] = { cantidad: 0, subtotal: 0 };
+              }
+              conteoProductos[prodNombre].cantidad += cant;
+              conteoProductos[prodNombre].subtotal += (cant * precioUni);
             }
+          });
         }
+      });
 
-        function cerrarSesion() {
-            sucursalActiva = null;
-            carrito = [];
-            document.getElementById('label-sucursal-actual').innerText = "Sin Sesión";
-            document.getElementById('sec-login').classList.remove('hidden');
-            document.getElementById('nav-buttons').classList.add('hidden');
-            
-            // Ocultar todas las pestañas
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(t => t.classList.remove('active'));
+      // Renderizar Tabla
+      const tablaBody = document.getElementById('tabla-top-productos');
+      const keys = Object.keys(conteoProductos);
+      if (keys.length === 0) {
+        tablaBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-[#6b5f52]">No hay registros en este periodo</td></tr>`;
+      } else {
+        tablaBody.innerHTML = keys.map(k => `
+          <tr class="hover:bg-[#221c15] transition">
+            <td class="p-2 font-bold text-zinc-200">${k}</td>
+            <td class="p-2 text-center text-zinc-300 font-mono-brand">${conteoProductos[k].cantidad}</td>
+            <td class="p-2 text-right text-[#f2a93b] font-bold">${conteoProductos[k].subtotal.toFixed(2)} Bs</td>
+          </tr>
+        `).join('');
+      }
+
+      // Renderizar Historial
+      const historialCont = document.getElementById('lista-historial-pedidos');
+      if (ventasFiltradas.length === 0) {
+        historialCont.innerHTML = `<p class="text-center text-[#6b5f52] text-xs py-4">Sin ordenes</p>`;
+      } else {
+        historialCont.innerHTML = ventasFiltradas.map(v => `
+          <div class="bg-[#0c0b0a] p-2.5 rounded-lg border border-[#2a2019] text-xs space-y-1">
+            <div class="flex justify-between font-bold text-zinc-300">
+              <span class="font-mono-brand text-[#f2a93b]">${v.idVenta || 'RW-00'}</span> <span class="flex-1 px-2 truncate">${v.cliente || 'Cliente'}</span>
+              <span class="text-emerald-400">${v.total}</span>
+            </div>
+            ${v.tipoConsumo ? `<p class="text-[10px] text-[#f2a93b] font-bold uppercase">${v.tipoConsumo}${v.nota ? ' · Nota' : ''}</p>` : ''}
+            <p class="text-[11px] text-[#6b5f52] line-clamp-1">${v.detalle || ''}</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Interpreta el campo "disponible" que llega de Google Sheets (puede venir como
+    // booleano, "TRUE"/"FALSE", "SI"/"NO", vacío, etc). Por defecto se asume disponible.
+    function esProductoDisponible(p) {
+      if (p.disponible === undefined || p.disponible === null || p.disponible === '') return true;
+      const val = p.disponible.toString().trim().toUpperCase();
+      return !(val === 'FALSE' || val === 'NO' || val === '0');
+    }
+
+    function filtrarCategoria(categoria) {
+      mostrarVista('pos');
+
+      categoriaActiva = categoria;
+      renderizarCategorias();
+
+      const grid = document.getElementById('products-grid');
+      const filtrados = categoria === 'TODOS' 
+        ? menuData 
+        : menuData.filter(p => p.categoria.trim().toUpperCase() === categoria.toUpperCase());
+      
+      if (filtrados.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-[#6b5f52]">No hay productos en esta categoría</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtrados.map(p => {
+        const disponible = esProductoDisponible(p);
+        return `
+        <div onclick="${disponible ? `interceptarSeleccionProducto('${p.id}')` : ''}" class="product-card ${disponible ? '' : 'agotado'} bg-[#18140f] border border-[#2a2019] rounded-xl overflow-hidden ${disponible ? 'cursor-pointer' : ''} flex flex-col group shadow-lg">
+          <div class="h-32 w-full bg-[#221c15] overflow-hidden relative">
+            <img src="${p.imagenUrl}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=300'">
+            <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent"></div>
+            <span class="absolute top-2 right-2 bg-[#0c0b0a]/85 backdrop-blur text-[10px] px-2 py-0.5 rounded text-[#f2a93b] font-bold border border-[#f2a93b]/25 uppercase tracking-wide">
+              ${p.categoria}
+            </span>
+            ${!disponible ? `<span class="absolute inset-0 flex items-center justify-center bg-black/50"><span class="bg-[#e8332a] text-white text-[11px] font-black px-3 py-1 rounded uppercase tracking-wider">Agotado</span></span>` : ''}
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between">
+            <h3 class="font-bold text-sm text-zinc-100 line-clamp-2">${p.nombre}</h3>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="font-display text-lg text-[#e8332a] tracking-wide">${p.precio} Bs</span>
+              <span class="bg-[#e8332a]/10 text-[#e8332a] p-1.5 rounded-lg group-hover:bg-[#e8332a] group-hover:text-white transition">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join('');
+      
+      lucide.createIcons();
+    }
+
+    function interceptarSeleccionProducto(idProducto) {
+      const producto = menuData.find(p => p.id === idProducto);
+      if (!producto) return;
+
+      const catLower = producto.categoria.toLowerCase();
+      const requiereSalsa = catLower.includes('alita') || catLower.includes('finger');
+
+      if (requiereSalsa) {
+        productoTemp = producto;
+        document.getElementById('modal-prod-nombre').innerText = producto.nombre;
+        setCantidadSalsas(1);
+        document.getElementById('modal-salsas').classList.remove('hidden');
+      } else {
+        agregarDirectoAlCarrito(producto, []);
+      }
+    }
+
+    function setCantidadSalsas(num) {
+      cantidadSalsasTemp = num;
+      [1, 2, 3, 4].forEach(i => {
+        const btn = document.getElementById(`btn-num-salsas-${i}`);
+        btn.className = (i === num) 
+          ? "num-salsa-btn bg-[#e8332a] text-white font-bold py-2 rounded-lg text-xs transition"
+          : "num-salsa-btn bg-[#0c0b0a] border border-[#35291f] text-zinc-300 font-bold py-2 rounded-lg text-xs hover:border-[#e8332a]/50 transition";
+      });
+
+      seleccionesSalsas = [];
+      for (let i = 0; i < num; i++) {
+        seleccionesSalsas.push({ nombre: LISTA_SALSAS[0], modo: 'Bañadas' });
+      }
+      renderizarFilasSalsas();
+    }
+
+    function renderizarFilasSalsas() {
+      const contenedor = document.getElementById('contenedor-filas-salsas');
+      contenedor.innerHTML = seleccionesSalsas.map((item, idx) => `
+        <div class="bg-[#0c0b0a] p-3 rounded-lg border border-[#2a2019] space-y-2">
+          <span class="text-xs font-bold text-[#e8332a] uppercase tracking-wider">Salsa #${idx + 1}</span>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <select onchange="actualizarSalsaSabor(${idx}, this.value)" class="brand-input w-full bg-[#18140f] border border-[#35291f] rounded-lg p-2 text-xs text-white focus:outline-none transition">
+                ${LISTA_SALSAS.map(s => `<option value="${s}" ${s === item.nombre ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-1">
+              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Bañadas')" class="py-1.5 rounded text-[11px] font-bold transition ${item.modo === 'Bañadas' ? 'bg-[#e8332a] text-white' : 'bg-[#18140f] border border-[#35291f] text-zinc-400 hover:border-[#e8332a]/50'}">Bañadas</button>
+              <button type="button" onclick="actualizarSalsaModo(${idx}, 'Salsa Aparte')" class="py-1.5 rounded text-[11px] font-bold transition ${item.modo === 'Salsa Aparte' ? 'bg-[#e8332a] text-white' : 'bg-[#18140f] border border-[#35291f] text-zinc-400 hover:border-[#e8332a]/50'}">Aparte</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function actualizarSalsaSabor(index, valor) {
+      if (seleccionesSalsas[index]) seleccionesSalsas[index].nombre = valor;
+    }
+
+    function actualizarSalsaModo(index, modo) {
+      if (seleccionesSalsas[index]) {
+        seleccionesSalsas[index].modo = modo;
+        renderizarFilasSalsas();
+      }
+    }
+
+    function cerrarModalSalsas() {
+      document.getElementById('modal-salsas').classList.add('hidden');
+      productoTemp = null;
+    }
+
+    function confirmarAgregarConSalsas() {
+      if (!productoTemp) return;
+      agregarDirectoAlCarrito(productoTemp, seleccionesSalsas);
+      cerrarModalSalsas();
+    }
+
+    function agregarDirectoAlCarrito(producto, listaSalsas) {
+      const salsasStr = listaSalsas.map(s => `${s.nombre}(${s.modo})`).join('+');
+      const claveUnica = `${producto.id}_${salsasStr}`;
+      const itemExistente = carrito.find(item => item.claveUnica === claveUnica);
+
+      if (itemExistente) {
+        itemExistente.cantidad++;
+      } else {
+        carrito.push({
+          claveUnica: claveUnica,
+          id: producto.id,
+          nombre: producto.nombre,
+          precio: parseFloat(producto.precio),
+          salsas: listaSalsas,
+          cantidad: 1
+        });
+      }
+      actualizarCarritoUI();
+    }
+
+    function cambiarCantidad(index, cambio) {
+      if (!carrito[index]) return;
+      carrito[index].cantidad += cambio;
+      if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
+      actualizarCarritoUI();
+    }
+
+    function vaciarCarrito() {
+      carrito = [];
+      metodoPagoSeleccionado = '';
+      tipoConsumoSeleccionado = '';
+      document.getElementById('cliente-nombre').value = '';
+      document.getElementById('cliente-celular').value = '';
+      document.getElementById('pedido-nota').value = '';
+      document.querySelectorAll('.pago-btn').forEach(btn => {
+        btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1";
+      });
+      document.querySelectorAll('.consumo-btn').forEach(btn => {
+        btn.className = "consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5";
+      });
+      lucide.createIcons();
+      actualizarCarritoUI();
+    }
+
+    function seleccionarPago(metodo) {
+      metodoPagoSeleccionado = metodo;
+      document.querySelectorAll('.pago-btn').forEach(btn => {
+        btn.className = "pago-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex flex-col items-center gap-1";
+      });
+      const btnActivo = document.getElementById(`btn-pago-${metodo}`);
+      if (btnActivo) btnActivo.className = "pago-btn bg-gradient-to-b from-[#f2a93b] to-[#c9821e] border border-transparent py-2 rounded-lg text-xs font-bold text-[#1a1208] transition flex flex-col items-center gap-1 shadow-lg shadow-[#f2a93b]/20";
+      lucide.createIcons();
+      validarFormularioVenta();
+    }
+
+    // NUEVO: selección de tipo de consumo (Para Llevar / En el Local)
+    function seleccionarTipoConsumo(tipo) {
+      tipoConsumoSeleccionado = tipo;
+      document.querySelectorAll('.consumo-btn').forEach(btn => {
+        btn.className = "consumo-btn bg-[#18140f] border border-[#35291f] py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:border-[#f2a93b] transition flex items-center justify-center gap-1.5";
+      });
+      const btnActivo = document.getElementById(`btn-consumo-${tipo}`);
+      if (btnActivo) btnActivo.className = "consumo-btn bg-gradient-to-b from-[#f2a93b] to-[#c9821e] border border-transparent py-2 rounded-lg text-xs font-bold text-[#1a1208] transition flex items-center justify-center gap-1.5 shadow-lg shadow-[#f2a93b]/20";
+      lucide.createIcons();
+      validarFormularioVenta();
+    }
+
+    function validarFormularioVenta() {
+      const btnCompletar = document.getElementById('btn-completar');
+      const nombreCliente = document.getElementById('cliente-nombre').value.trim();
+      const esValido = carrito.length > 0 && metodoPagoSeleccionado !== '' && tipoConsumoSeleccionado !== '' && nombreCliente !== '';
+      
+      btnCompletar.disabled = !esValido;
+      btnCompletar.className = esValido
+        ? "w-full bg-gradient-to-r from-[#e8332a] to-[#ff7a1a] hover:brightness-110 text-white font-bold py-3.5 rounded-lg text-sm tracking-wide transition shadow-lg shadow-[#e8332a]/30 flex items-center justify-center gap-2 cursor-pointer border border-transparent"
+        : "w-full bg-[#18140f] text-[#6b5f52] font-bold py-3.5 rounded-lg text-sm tracking-wide transition flex items-center justify-center gap-2 cursor-not-allowed border border-[#2a2019]";
+      btnCompletar.innerHTML = esValido
+        ? '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR'
+        : '<i data-lucide="flame" class="w-4 h-4"></i> ENVIAR A COCINA Y REGISTRAR';
+      lucide.createIcons();
+    }
+
+    function actualizarCarritoUI() {
+      const container = document.getElementById('cart-items');
+      if (carrito.length === 0) {
+        container.innerHTML = `<div class="text-center text-[#6b5f52] py-12 text-sm flex flex-col items-center gap-2"><i data-lucide="utensils-crossed" class="w-8 h-8 opacity-40"></i>No hay productos en la orden</div>`;
+        lucide.createIcons();
+      } else {
+        container.innerHTML = carrito.map((item, idx) => `
+          <div class="bg-[#0c0b0a] p-3 rounded-lg border border-[#2a2019] space-y-1">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 pr-2">
+                <h4 class="text-xs font-bold text-zinc-100">${item.nombre}</h4>
+                ${item.salsas && item.salsas.length > 0 ? `
+                  <div class="mt-1 space-y-0.5">
+                    ${item.salsas.map((s, i) => `
+                      <p class="text-[11px] text-[#f2a93b] font-semibold flex items-center gap-1">
+                        🎯 S${i+1}: ${s.nombre} <span class="bg-[#18140f] px-1.5 py-0.2 rounded text-[10px] text-zinc-300 border border-[#35291f]">${s.modo}</span>
+                      </p>
+                    `).join('')}
+                  </div>
+                ` : ''}
+                <p class="text-xs text-[#e8332a] font-black mt-1">${(item.precio * item.cantidad).toFixed(2)} Bs</p>
+              </div>
+              <div class="flex items-center gap-2 bg-[#18140f] border border-[#2a2019] rounded px-2 py-1">
+                <button onclick="cambiarCantidad(${idx}, -1)" class="text-zinc-400 hover:text-white font-bold text-xs w-4">-</button>
+                <span class="text-xs font-bold w-4 text-center text-white">${item.cantidad}</span>
+                <button onclick="cambiarCantidad(${idx}, 1)" class="text-zinc-400 hover:text-white font-bold text-xs w-4">+</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      document.getElementById('cart-subtotal').innerText = `${total.toFixed(2)} Bs`;
+      document.getElementById('cart-total').innerText = `${total.toFixed(2)} Bs`;
+      validarFormularioVenta();
+      actualizarFabCarrito(total);
+    }
+
+    // ===== RESPONSIVE: refleja el estado del carrito en el botón flotante móvil =====
+    function actualizarFabCarrito(total) {
+      const fab = document.getElementById('fab-carrito');
+      const badge = document.getElementById('fab-carrito-badge');
+      const totalLabel = document.getElementById('fab-carrito-total');
+      const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+
+      if (totalItems > 0) {
+        fab.classList.remove('hidden');
+        fab.classList.add('flex');
+        badge.classList.remove('hidden');
+        badge.innerText = totalItems;
+        totalLabel.innerText = `${total.toFixed(2)} Bs`;
+      } else {
+        fab.classList.add('hidden');
+        fab.classList.remove('flex');
+        badge.classList.add('hidden');
+        totalLabel.innerText = 'Ver Orden';
+      }
+    }
+
+    async function procesarVenta() {
+      const nombreCliente = document.getElementById('cliente-nombre').value.trim();
+      const celularCliente = document.getElementById('cliente-celular').value.trim();
+      const notaPedido = document.getElementById('pedido-nota').value.trim();
+      if (carrito.length === 0 || !metodoPagoSeleccionado || !tipoConsumoSeleccionado || !nombreCliente) return;
+
+      const btnCompletar = document.getElementById('btn-completar');
+      btnCompletar.disabled = true;
+      btnCompletar.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> REGISTRANDO VENTA...';
+      lucide.createIcons();
+
+      const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      
+      const detalleTexto = carrito.map(i => {
+        let especSalsas = '';
+        if (i.salsas && i.salsas.length > 0) {
+          especSalsas = ' [' + i.salsas.map(s => `${s.nombre} (${s.modo})`).join(', ') + ']';
         }
+        return `${i.cantidad}x ${i.nombre}${especSalsas}`;
+      }).join(' | ');
 
-        function solicitarAcceso(moduloTarget) {
-            let passReq = "";
-            let passIngresada = "";
+      const etiquetaTipoConsumo = ETIQUETA_TIPO_CONSUMO[tipoConsumoSeleccionado] || tipoConsumoSeleccionado;
 
-            if (moduloTarget === 'dev' || moduloTarget === 'inventario') {
-                passReq = CLAVE_DEV;
-                passIngresada = prompt("Acceso Restringido - Ingrese clave de Desarrollador/Administrador:");
-            } else if (moduloTarget === 'resumen') {
-                passReq = CLAVE_DUENO;
-                passIngresada = prompt("Acceso Privado Dueño - Ingrese Contraseña MÁSTER:");
-            }
+      // ✅ AJUSTADO: nombre y celular van separados (antes iban combinados en "cliente")
+      // así el reporte en Google Sheets guarda cada dato en su propia columna.
+      const datosVenta = {
+        total: total.toFixed(2) + ' Bs',
+        metodoPago: metodoPagoSeleccionado,
+        clienteNombre: nombreCliente,
+        clienteCelular: celularCliente || 'N/A',
+        detalleJson: detalleTexto,
+        tipoConsumo: etiquetaTipoConsumo,     // "Para Llevar" o "En el Local"
+        nota: notaPedido || '',               // Nota opcional del pedido
+        sucursalId: sucursalActual ? sucursalActual.id : 'SIN_SUCURSAL',       // NUEVO
+        sucursalNombre: sucursalActual ? sucursalActual.nombre : 'Sin sucursal' // NUEVO
+      };
 
-            if (passIngresada === passReq) {
-                cambiarTab(moduloTarget);
-            } else if (passIngresada !== null) {
-                alert("Acceso denegado: Contraseña no válida.");
-            }
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(datosVenta)
+        });
+        const respuesta = await response.json();
+        
+        if (respuesta.exito) {
+          mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
+        } else {
+          alert('Error al guardar la venta: ' + respuesta.error);
         }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión con Google Sheets.');
+      } finally {
+        validarFormularioVenta();
+      }
+    }
 
-        function cambiarTab(tabId) {
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(t => t.classList.remove('active'));
-            
-            const target = document.getElementById('tab-' + tabId);
-            if (target) {
-                target.classList.add('active');
-            }
+    function mostrarComandaCocinaModal(idVenta, totalBs, cliente, celular, tipoConsumo, nota) {
+      cerrarCarritoMobile();
+      document.getElementById('ticket-id').innerText = `ORDEN #: ${idVenta}`;
+      document.getElementById('ticket-fecha').innerText = `Hora: ${new Date().toLocaleTimeString()} - ${new Date().toLocaleDateString()}`;
+      document.getElementById('ticket-total').innerText = `${totalBs} Bs`;
+      document.getElementById('ticket-cliente-nombre').innerText = cliente;
+      document.getElementById('ticket-cliente-celular').innerText = celular || 'N/A';
+      document.getElementById('ticket-tipo-consumo').innerText = tipoConsumo || '---';
 
-            // Renderizar vistas específicas al activarlas
-            if (tabId === 'pos') renderizarPOS();
-            if (tabId === 'inventario') renderizarInventario();
-            if (tabId === 'dev') renderizarDevMode();
-            if (tabId === 'resumen') renderizarResumenDueno();
-        }
+      const notaContainer = document.getElementById('ticket-nota-container');
+      if (nota) {
+        document.getElementById('ticket-nota').innerText = nota;
+        notaContainer.classList.remove('hidden');
+      } else {
+        notaContainer.classList.add('hidden');
+      }
 
-        // --- 3. LÓGICA DE PUNTO DE VENTA (POS) ---
+      const detallesContainer = document.getElementById('ticket-detalles');
+      detallesContainer.innerHTML = carrito.map(i => `
+        <div class="border-b border-dashed border-zinc-300 pb-2">
+          <div class="flex justify-between items-start font-black text-base">
+            <span>${i.cantidad}x ${i.nombre}</span>
+            <span>${(i.precio * i.cantidad).toFixed(2)} Bs</span>
+          </div>
+          ${i.salsas && i.salsas.length > 0 ? `
+            <div class="mt-1 bg-zinc-100 p-2 rounded text-xs space-y-1">
+              ${i.salsas.map((s, idx) => `
+                <div class="flex justify-between border-b border-zinc-200/60 pb-0.5 last:border-none">
+                  <span class="font-bold text-black">SALSA ${idx + 1}: ${s.nombre.toUpperCase()}</span>
+                  <span class="font-black text-[#e8332a] uppercase">${s.modo}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
 
-        function renderizarPOS() {
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const productosSucursal = db[sucursalActiva] || [];
-            const grid = document.getElementById('grid-productos');
-            grid.innerHTML = '';
+      document.getElementById('modal-comanda').classList.remove('hidden');
+      lucide.createIcons();
+    }
 
-            productosSucursal.forEach(prod => {
-                if (prod.disponibilidad !== false) {
-                    const card = document.createElement('div');
-                    card.className = "border rounded-lg p-4 bg-white shadow-sm flex flex-col justify-between hover:border-blue-500 transition-all";
-                    card.innerHTML = `
-                        <div>
-                            <h4 class="font-bold text-slate-800">${prod.nombre}</h4>
-                            <p class="text-xs text-gray-500">Stock: ${prod.stock} unids.</p>
-                            <p class="text-lg font-black text-blue-600 mt-2">Bs. ${Number(prod.precio).toFixed(2)}</p>
-                        </div>
-                        <button onclick="agregarAlCarrito(${prod.id})" class="mt-3 w-full bg-slate-900 text-white text-xs font-bold py-2 rounded hover:bg-slate-800">
-                            Agregar
-                        </button>
-                    `;
-                    grid.appendChild(card);
-                }
-            });
-            renderizarCarrito();
-        }
+    function imprimirComanda() { window.print(); }
 
-        function agregarAlCarrito(idProd) {
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const prod = db[sucursalActiva].find(p => p.id === idProd);
+    function cerrarComanda() {
+      document.getElementById('modal-comanda').classList.add('hidden');
+      vaciarCarrito();
+    }
 
-            if (!prod || prod.stock <= 0) {
-                alert("Producto sin stock disponible.");
-                return;
-            }
+    // ===================================================================
+    // ===== NUEVO: MODO DESARROLLADOR (precios y disponibilidad) =====
+    // ===================================================================
 
-            const itemEnCarrito = carrito.find(item => item.id === idProd);
-            if (itemEnCarrito) {
-                if (itemEnCarrito.cantidad < prod.stock) {
-                    itemEnCarrito.cantidad++;
-                } else {
-                    alert("Has alcanzado el límite del stock disponible.");
-                }
-            } else {
-                carrito.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, categoria: prod.categoria, cantidad: 1 });
-            }
-            renderizarCarrito();
-        }
+    function renderizarTablaDesarrollador() {
+      cambiosDevPendientes = {};
+      const tbody = document.getElementById('tabla-dev-productos');
+      if (menuData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-[#6b5f52]">No se pudo cargar el menú</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = menuData.map(p => {
+        const disponible = esProductoDisponible(p);
+        return `
+        <tr class="hover:bg-[#221c15] transition">
+          <td class="p-3 font-bold text-zinc-200">${p.nombre}</td>
+          <td class="p-3 text-[#a69a8a]">${p.categoria}</td>
+          <td class="p-3">
+            <div class="flex items-center gap-1">
+              <input type="number" step="0.01" min="0" value="${parseFloat(p.precio).toFixed(2)}"
+                onchange="marcarCambioDev('${p.id}', 'precio', this.value)"
+                class="precio-dev-input brand-input bg-[#0c0b0a] border border-[#35291f] rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none">
+              <span class="text-[#6b5f52] text-[11px]">Bs</span>
+            </div>
+          </td>
+          <td class="p-3 text-center">
+            <label class="switch-disponible">
+              <input type="checkbox" ${disponible ? 'checked' : ''} onchange="marcarCambioDev('${p.id}', 'disponible', this.checked)">
+              <span class="switch-slider"></span>
+            </label>
+          </td>
+        </tr>
+      `;
+      }).join('');
+    }
 
-        function renderizarCarrito() {
-            const cont = document.getElementById('lista-carrito');
-            cont.innerHTML = '';
-            let total = 0;
+    function marcarCambioDev(idProducto, campo, valor) {
+      if (!cambiosDevPendientes[idProducto]) cambiosDevPendientes[idProducto] = { id: idProducto };
+      cambiosDevPendientes[idProducto][campo] = valor;
+    }
 
-            if (carrito.length === 0) {
-                cont.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">No hay productos seleccionados</p>';
-            } else {
-                carrito.forEach((item, index) => {
-                    const st = item.precio * item.cantidad;
-                    total += st;
-                    const row = document.createElement('div');
-                    row.className = "flex justify-between items-center text-sm border-b pb-2";
-                    row.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-slate-800">${item.nombre}</p>
-                            <p class="text-xs text-gray-500">${item.cantidad} x Bs. ${item.precio}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="font-bold">Bs. ${st.toFixed(2)}</span>
-                            <button onclick="eliminarDelCarrito(${index})" class="text-red-500 hover:text-red-700 text-xs font-bold">X</button>
-                        </div>
-                    `;
-                    cont.appendChild(row);
-                });
-            }
-            document.getElementById('total-venta').innerText = `Bs. ${total.toFixed(2)}`;
-        }
+    async function guardarCambiosDesarrollador() {
+      const ids = Object.keys(cambiosDevPendientes);
+      if (ids.length === 0) { alert('No hay cambios para guardar.'); return; }
 
-        function eliminarDelCarrito(index) {
-            carrito.splice(index, 1);
-            renderizarCarrito();
-        }
+      const btn = event && event.target ? event.target.closest('button') : null;
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Guardando...'; lucide.createIcons(); }
 
-        function procesarVenta() {
-            if (carrito.length === 0) {
-                alert("El carrito está vacío.");
-                return;
-            }
-
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const ventas = JSON.parse(localStorage.getItem('db_ventas'));
-
-            // Descontar stock
-            carrito.forEach(item => {
-                const prod = db[sucursalActiva].find(p => p.id === item.id);
-                if (prod) prod.stock -= item.cantidad;
-            });
-
-            // Registrar transacción
-            const total = carrito.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
-            const nuevaVenta = {
-                idVenta: Date.now(),
-                sucursal: sucursalActiva,
-                fecha: new Date().toISOString(),
-                items: [...carrito],
-                total: total
-            };
-
-            ventas.push(nuevaVenta);
-
-            // Guardar cambios
-            localStorage.setItem('db_productos', JSON.stringify(db));
-            localStorage.setItem('db_ventas', JSON.stringify(ventas));
-
-            alert("¡Venta completada con éxito!");
-            carrito = [];
-            renderizarPOS();
-        }
-
-        // --- 4. MÓDULO DE INVENTARIO DE SODAS ---
-
-        function renderizarInventario() {
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const productos = db[sucursalActiva] || [];
-            
-            const selectSoda = document.getElementById('select-soda-inv');
-            const tablaBody = document.getElementById('tabla-inventario-body');
-            
-            selectSoda.innerHTML = '';
-            tablaBody.innerHTML = '';
-
-            productos.filter(p => p.categoria === 'sodas').forEach(soda => {
-                // Opción para el select
-                const opt = document.createElement('option');
-                opt.value = soda.id;
-                opt.innerText = soda.nombre;
-                selectSoda.appendChild(opt);
-
-                // Fila para la tabla
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-3 font-medium">${soda.nombre}</td>
-                    <td class="p-3 font-bold">${soda.stock} unidades</td>
-                    <td class="p-3">
-                        <span class="px-2 py-1 text-xs rounded-full ${soda.stock < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                            ${soda.stock < 10 ? 'Stock Bajo' : 'Normal'}
-                        </span>
-                    </td>
-                `;
-                tablaBody.appendChild(tr);
-            });
-        }
-
-        function agregarStockSoda() {
-            const sodaId = parseInt(document.getElementById('select-soda-inv').value);
-            const cant = parseInt(document.getElementById('input-cant-inv').value);
-
-            if (isNaN(cant) || cant <= 0) {
-                alert("Ingrese una cantidad válida.");
-                return;
-            }
-
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const soda = db[sucursalActiva].find(p => p.id === sodaId);
-
-            if (soda) {
-                soda.stock += cant;
-                localStorage.setItem('db_productos', JSON.stringify(db));
-                document.getElementById('input-cant-inv').value = '';
-                renderizarInventario();
-                alert("Stock actualizado exitosamente.");
-            }
-        }
-
-        function generarReporteSodas() {
-            const fInicio = document.getElementById('fecha-inicio-rep').value;
-            const fFin = document.getElementById('fecha-fin-rep').value;
-
-            if (!fInicio || !fFin) {
-                alert("Por favor seleccione un rango de fechas válido.");
-                return;
-            }
-
-            const ventas = JSON.parse(localStorage.getItem('db_ventas'));
-            const inicio = new Date(fInicio + "T00:00:00");
-            const fin = new Date(fFin + "T23:59:59");
-
-            // Filtrar por fecha y por la sucursal activa
-            const ventasFiltradas = ventas.filter(v => {
-                const f = new Date(v.fecha);
-                return v.sucursal === sucursalActiva && f >= inicio && f <= fin;
-            });
-
-            // Consolidar cantidades vendidas por soda
-            const resumenSodas = {};
-            ventasFiltradas.forEach(v => {
-                v.items.forEach(item => {
-                    if (item.categoria === 'sodas') {
-                        if (!resumenSodas[item.nombre]) resumenSodas[item.nombre] = 0;
-                        resumenSodas[item.nombre] += item.cantidad;
-                    }
-                });
-            });
-
-            const contResultado = document.getElementById('resultado-reporte-sodas');
-            contResultado.innerHTML = `<h4 class="font-bold mb-2">Ventas de Sodas (${fInicio} al ${fFin}):</h4>`;
-            
-            const keys = Object.keys(resumenSodas);
-            if (keys.length === 0) {
-                contResultado.innerHTML += '<p class="text-gray-500">No se registraron ventas de sodas en el periodo seleccionado.</p>';
-            } else {
-                const ul = document.createElement('ul');
-                ul.className = "list-disc pl-5 space-y-1";
-                keys.forEach(k => {
-                    ul.innerHTML += `<li><strong>${k}:</strong> ${resumenSodas[k]} unidades vendidas.</li>`;
-                });
-                contResultado.appendChild(ul);
-            }
-        }
-
-        // --- 5. MODO DESARROLLADOR (EDICIÓN DIRECTA) ---
-
-        function renderizarDevMode() {
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const productos = db[sucursalActiva] || [];
-            const tabla = document.getElementById('tabla-dev-body');
-            tabla.innerHTML = '';
-
-            productos.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-3 font-medium">${p.nombre}</td>
-                    <td class="p-3">
-                        <input type="number" id="dev-precio-${p.id}" value="${p.precio}" class="border rounded p-1 w-24 text-sm">
-                    </td>
-                    <td class="p-3">
-                        <select id="dev-disp-${p.id}" class="border rounded p-1 text-sm">
-                            <option value="true" ${p.disponibilidad !== false ? 'selected' : ''}>Disponible</option>
-                            <option value="false" ${p.disponibilidad === false ? 'selected' : ''}>No Disponible</option>
-                        </select>
-                    </td>
-                    <td class="p-3">
-                        <button onclick="guardarCambiosDev(${p.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
-                            Guardar
-                        </button>
-                    </td>
-                `;
-                tabla.appendChild(tr);
-            });
-        }
-
-        function guardarCambiosDev(idProd) {
-            const nuevoPrecio = parseFloat(document.getElementById(`dev-precio-${idProd}`).value);
-            const nuevaDisp = document.getElementById(`dev-disp-${idProd}`).value === "true";
-
-            if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
-                alert("Precio no válido.");
-                return;
-            }
-
-            const db = JSON.parse(localStorage.getItem('db_productos'));
-            const prod = db[sucursalActiva].find(p => p.id === idProd);
-
+      try {
+        // NUEVO ENDPOINT REQUERIDO EN EL BACKEND (Google Apps Script):
+        // action=actualizarProductos — recibe { cambios: [{id, precio, disponible}, ...] }
+        // y debe actualizar las columnas Precio / Disponible en la hoja de Menú.
+        const response = await fetch(`${API_URL}?action=actualizarProductos`, {
+          method: 'POST',
+          body: JSON.stringify({ cambios: Object.values(cambiosDevPendientes) })
+        });
+        const respuesta = await response.json();
+        if (respuesta.exito) {
+          // Aplica los cambios localmente para reflejarlos de inmediato
+          Object.values(cambiosDevPendientes).forEach(c => {
+            const prod = menuData.find(m => m.id === c.id);
             if (prod) {
-                prod.precio = nuevoPrecio;
-                prod.disponibilidad = nuevaDisp;
-                localStorage.setItem('db_productos', JSON.stringify(db));
-                alert(`Producto "${prod.nombre}" actualizado correctamente.`);
+              if (c.precio !== undefined) prod.precio = c.precio;
+              if (c.disponible !== undefined) prod.disponible = c.disponible;
             }
+          });
+          cambiosDevPendientes = {};
+          alert('✅ Precios y disponibilidad actualizados correctamente.');
+          renderizarTablaDesarrollador();
+        } else {
+          alert('Error al guardar: ' + (respuesta.error || 'desconocido'));
         }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión al guardar los cambios. Verifica que el backend tenga implementada la acción "actualizarProductos".');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios'; lucide.createIcons(); }
+      }
+    }
 
-        // --- 6. RESUMEN MÁSTER DEL DUEÑO ---
+    // ===================================================================
+    // ===== NUEVO: INVENTARIO DE BEBIDAS (SODAS) =====
+    // ===================================================================
 
-        function renderizarResumenDueno() {
-            const ventas = JSON.parse(localStorage.getItem('db_ventas')) || [];
-            const sucursales = ["Villa Victoria", "Villa Copacabana", "Tembladerani"];
-            
-            let montoGlobal = 0;
-            let transaccionesGlobales = ventas.length;
-            const totalesPorSucursal = {};
+    function esBebida(p) {
+      return (p.categoria || '').trim().toUpperCase() === 'BEBIDAS';
+    }
 
-            // Inicializar totales
-            sucursales.forEach(s => totalesPorSucursal[s] = { total: 0, cantidad: 0 });
+    function filtrarInventario(periodo) {
+      filtroInventarioActivo = periodo;
+      ['HOY', 'SEMANA', 'MES'].forEach(p => {
+        const btn = document.getElementById(`btn-inv-filtro-${p}`);
+        if (!btn) return;
+        btn.className = p === periodo
+          ? "btn-inv-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white"
+          : "btn-inv-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition";
+      });
 
-            // Acumular ventas
-            ventas.forEach(v => {
-                montoGlobal += v.total;
-                if (totalesPorSucursal[v.sucursal]) {
-                    totalesPorSucursal[v.sucursal].total += v.total;
-                    totalesPorSucursal[v.sucursal].cantidad++;
-                }
-            });
+      const { ventasFiltradas, dias } = ventasEnPeriodo(ventasData, periodo);
+      const vendidos = contarUnidadesVendidasPorProducto(ventasFiltradas);
 
-            // Determinar sucursal líder
-            let topSucursal = "-";
-            let maxMonto = -1;
-            Object.keys(totalesPorSucursal).forEach(s => {
-                if (totalesPorSucursal[s].total > maxMonto && totalesPorSucursal[s].total > 0) {
-                    maxMonto = totalesPorSucursal[s].total;
-                    topSucursal = s;
-                }
-            });
+      const bebidas = menuData.filter(esBebida);
+      const tbody = document.getElementById('tabla-inventario-bebidas');
+      if (bebidas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-[#6b5f52]">No hay bebidas registradas en el menú (categoría "BEBIDAS")</td></tr>`;
+        return;
+      }
 
-            // Actualizar KPIs Globales
-            document.getElementById('resumen-total-monto').innerText = `Bs. ${montoGlobal.toFixed(2)}`;
-            document.getElementById('resumen-total-ventas').innerText = transaccionesGlobales;
-            document.getElementById('resumen-sucursal-top').innerText = topSucursal;
+      tbody.innerHTML = bebidas.map(b => {
+        const cant = vendidos[b.nombre.trim()] || 0;
+        const promedio = dias > 0 ? (cant / dias).toFixed(1) : cant.toFixed(1);
+        const stock = (b.stock !== undefined && b.stock !== '' && !isNaN(parseFloat(b.stock))) ? parseFloat(b.stock) : null;
+        return `
+        <tr class="hover:bg-[#221c15] transition">
+          <td class="p-3 font-bold text-zinc-200">${b.nombre}</td>
+          <td class="p-3 text-center ${stock !== null && stock <= 5 ? 'text-[#e8332a] font-bold' : 'text-zinc-200 font-bold'}">
+            ${stock !== null ? stock : '<span class="text-[#6b5f52]">Sin dato</span>'}
+          </td>
+          <td class="p-3 text-center text-zinc-300 font-mono-brand">${cant}</td>
+          <td class="p-3 text-center text-[#f2a93b] font-bold">${promedio}</td>
+          <td class="p-3 text-center">
+            <button onclick="reponerStock('${b.id}', '${b.nombre.replace(/'/g, "\\'")}')" class="bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
+              <i data-lucide="plus" class="w-3 h-3"></i> Reponer
+            </button>
+          </td>
+        </tr>
+      `;
+      }).join('');
+      lucide.createIcons();
+    }
 
-            // Renderizar Tarjetas de Sucursal
-            const grid = document.getElementById('grid-resumen-sucursales');
-            grid.innerHTML = '';
-
-            sucursales.forEach(s => {
-                const data = totalesPorSucursal[s];
-                const card = document.createElement('div');
-                card.className = "border rounded-xl p-5 bg-slate-50 border-gray-200 shadow-sm";
-                card.innerHTML = `
-                    <h5 class="font-bold text-slate-800 text-lg border-b pb-2 mb-3">${s}</h5>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Ingreso Total:</span>
-                            <span class="font-bold text-blue-600">Bs. ${data.total.toFixed(2)}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Ventas Realizadas:</span>
-                            <span class="font-semibold">${data.cantidad}</span>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
+    // Filtra ventas según el periodo y devuelve además los "días" del rango (para el promedio)
+    function ventasEnPeriodo(ventas, periodo) {
+      const ahora = new Date();
+      let dias = 1;
+      const filtradas = ventas.filter(v => {
+        if (!v.fecha) return false;
+        const fechaVenta = new Date(v.fecha);
+        if (periodo === 'HOY') { dias = 1; return fechaVenta.toDateString() === ahora.toDateString(); }
+        if (periodo === 'SEMANA') { dias = 7; const hace7 = new Date(); hace7.setDate(ahora.getDate() - 7); return fechaVenta >= hace7; }
+        if (periodo === 'MES') {
+          dias = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+          return fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear();
         }
+        return true;
+      });
+      return { ventasFiltradas: filtradas, dias };
+    }
 
-        // --- INICIALIZACIÓN AUTOMÁTICA AL CERRAR CARGA ---
-        document.addEventListener('DOMContentLoaded', inicializarBaseDatos);
-    </script>
+    // Reutiliza el formato "2x Nombre [salsas]" del historial para contar unidades por producto
+    function contarUnidadesVendidasPorProducto(ventas) {
+      const conteo = {};
+      ventas.forEach(v => {
+        if (!v.detalle) return;
+        v.detalle.split(' | ').forEach(itemStr => {
+          const match = itemStr.match(/^(\d+)x\s+([^\[]+)/);
+          if (!match) return;
+          const cant = parseInt(match[1]);
+          const nombre = match[2].trim();
+          conteo[nombre] = (conteo[nombre] || 0) + cant;
+        });
+      });
+      return conteo;
+    }
+
+    async function reponerStock(idProducto, nombreProducto) {
+      const cantidadStr = prompt(`¿Cuántas unidades de "${nombreProducto}" deseas agregar al stock?`, '0');
+      if (cantidadStr === null) return;
+      const cantidad = parseFloat(cantidadStr);
+      if (isNaN(cantidad) || cantidad <= 0) { alert('Ingresa una cantidad válida mayor a 0.'); return; }
+
+      try {
+        // NUEVO ENDPOINT REQUERIDO EN EL BACKEND (Google Apps Script):
+        // action=actualizarStock — recibe { id, cantidad, sucursal } y suma "cantidad"
+        // al stock actual del producto en la hoja correspondiente.
+        const response = await fetch(`${API_URL}?action=actualizarStock`, {
+          method: 'POST',
+          body: JSON.stringify({ id: idProducto, cantidad: cantidad, sucursal: sucursalActual ? sucursalActual.id : '' })
+        });
+        const respuesta = await response.json();
+        if (respuesta.exito) {
+          const prod = menuData.find(m => m.id === idProducto);
+          if (prod) {
+            const actual = (prod.stock !== undefined && !isNaN(parseFloat(prod.stock))) ? parseFloat(prod.stock) : 0;
+            prod.stock = actual + cantidad;
+          }
+          filtrarInventario(filtroInventarioActivo);
+        } else {
+          alert('Error al reponer stock: ' + (respuesta.error || 'desconocido'));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión al reponer stock. Verifica que el backend tenga implementada la acción "actualizarStock".');
+      }
+    }
+
+    // ===================================================================
+    // ===== NUEVO: PANEL DEL DUEÑO (resumen general y por sucursal) =====
+    // ===================================================================
+
+    async function mostrarPanelDueño() {
+      document.getElementById('pantalla-sucursal').classList.add('hidden');
+      document.getElementById('pantalla-dueño').classList.remove('hidden');
+      document.getElementById('pantalla-dueño').classList.add('flex');
+      lucide.createIcons();
+      await cargarVentasDueño();
+    }
+
+    function salirDePanelDueño() {
+      document.getElementById('pantalla-dueño').classList.add('hidden');
+      document.getElementById('pantalla-dueño').classList.remove('flex');
+      if (sucursalActual) {
+        document.getElementById('pantalla-sucursal').classList.add('hidden');
+      } else {
+        document.getElementById('pantalla-sucursal').classList.remove('hidden');
+      }
+    }
+
+    async function cargarVentasDueño() {
+      try {
+        // Se consulta la venta de cada sucursal por separado, en paralelo.
+        const respuestas = await Promise.all(SUCURSALES.map(s =>
+          fetch(`${API_URL}?action=getVentas&sucursal=${encodeURIComponent(s.id)}`)
+            .then(r => r.json())
+            .catch(() => [])
+        ));
+        SUCURSALES.forEach((s, idx) => {
+          ventasDueñoPorSucursal[s.id] = Array.isArray(respuestas[idx]) ? respuestas[idx] : [];
+        });
+        filtrarResumenDueño(filtroDueñoActivo);
+      } catch (err) {
+        console.error('Error al cargar ventas del panel del dueño:', err);
+      }
+    }
+
+    function filtrarResumenDueño(periodo) {
+      filtroDueñoActivo = periodo;
+      ['HOY', 'SEMANA', 'MES'].forEach(p => {
+        const btn = document.getElementById(`btn-dueño-filtro-${p}`);
+        if (!btn) return;
+        btn.className = p === periodo
+          ? "btn-dueño-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold transition bg-[#e8332a] text-white"
+          : "btn-dueño-filtro-tiempo px-3 py-1.5 rounded-md text-xs font-bold text-[#a69a8a] hover:text-white transition";
+      });
+
+      let totalGeneral = 0;
+      let pedidosGeneral = 0;
+      const tarjetasHtml = SUCURSALES.map(s => {
+        const ventasSucursal = ventasDueñoPorSucursal[s.id] || [];
+        const { ventasFiltradas } = ventasEnPeriodo(ventasSucursal, periodo);
+        const totalSucursal = ventasFiltradas.reduce((sum, v) => sum + (parseFloat((v.total || '0').toString().replace(' Bs', '')) || 0), 0);
+        totalGeneral += totalSucursal;
+        pedidosGeneral += ventasFiltradas.length;
+        return `
+          <div class="bg-[#18140f] p-5 rounded-xl border border-[#2a2019] relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e8332a] to-[#f2a93b]"></div>
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="store" class="w-4 h-4 text-[#e8332a]"></i>
+              <h4 class="font-bold text-sm text-zinc-200">${s.nombre}</h4>
+            </div>
+            <p class="text-[11px] text-[#a69a8a] uppercase tracking-wide">Facturado</p>
+            <p class="font-display text-2xl text-[#f2a93b] mb-2">${totalSucursal.toFixed(2)} Bs</p>
+            <p class="text-[11px] text-[#a69a8a] uppercase tracking-wide">Pedidos</p>
+            <p class="font-display text-xl text-white">${ventasFiltradas.length}</p>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('dueño-kpi-total-ingresos').innerText = `${totalGeneral.toFixed(2)} Bs`;
+      document.getElementById('dueño-kpi-total-pedidos').innerText = pedidosGeneral;
+      document.getElementById('tarjetas-sucursales-dueño').innerHTML = tarjetasHtml;
+      lucide.createIcons();
+    }
+  </script>
+  <!-- Registro del Service Worker para soporte PWA y Offline -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('Service Worker registrado con éxito:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Error al registrar el Service Worker:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
