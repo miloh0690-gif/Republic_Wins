@@ -383,7 +383,7 @@
               <p class="text-xs text-[#a69a8a] mt-1">Edita precios y disponibilidad del menú en tiempo real</p>
             </div>
           </div>
-          <button onclick="guardarCambiosDesarrollador()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg flex items-center gap-2 transition shrink-0">
+          <button id="btn-guardar-dev" onclick="guardarCambiosDesarrollador()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg flex items-center gap-2 transition shrink-0">
             <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
           </button>
         </div>
@@ -706,6 +706,10 @@
     document.addEventListener('DOMContentLoaded', () => {
       iniciarReloj();
       renderizarGridSucursales();
+      // Permite confirmar la contraseña presionando Enter
+      document.getElementById('auth-password').addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); validarPassword(); }
+      });
       actualizarCarritoUI(); // deja el FAB en estado correcto desde el inicio
     });
 
@@ -875,12 +879,16 @@
     }
 
     function validarPassword() {
-      const pass = document.getElementById('auth-password').value;
+      // .trim() evita fallos por espacios accidentales (muy común al escribir en tablet/celular)
+      const pass = document.getElementById('auth-password').value.trim();
 
       if (modoAuthActual === 'SUCURSAL') {
-        if (sucursalPendiente && pass === sucursalPendiente.clave) {
+        // ✅ CORREGIDO: se guarda la referencia ANTES de cerrar el modal,
+        // porque cerrarAuthModal() limpia la variable sucursalPendiente.
+        const sucursalObjetivo = sucursalPendiente;
+        if (sucursalObjetivo && pass.trim() === sucursalObjetivo.clave) {
           cerrarAuthModal();
-          activarSucursal(sucursalPendiente);
+          activarSucursal(sucursalObjetivo);
         } else {
           document.getElementById('auth-error').classList.remove('hidden');
         }
@@ -1484,16 +1492,18 @@
       const ids = Object.keys(cambiosDevPendientes);
       if (ids.length === 0) { alert('No hay cambios para guardar.'); return; }
 
-      const btn = event && event.target ? event.target.closest('button') : null;
+      const btn = document.getElementById('btn-guardar-dev');
       if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Guardando...'; lucide.createIcons(); }
 
       try {
-        // NUEVO ENDPOINT REQUERIDO EN EL BACKEND (Google Apps Script):
-        // action=actualizarProductos — recibe { cambios: [{id, precio, disponible}, ...] }
-        // y debe actualizar las columnas Precio / Disponible en la hoja de Menú.
+        // Backend: action=actualizarProductos — recibe { cambios: [...], sucursal }
+        // y actualiza las columnas Precio / Disponible en la hoja de menú de esa sucursal.
         const response = await fetch(`${API_URL}?action=actualizarProductos`, {
           method: 'POST',
-          body: JSON.stringify({ cambios: Object.values(cambiosDevPendientes) })
+          body: JSON.stringify({
+            cambios: Object.values(cambiosDevPendientes),
+            sucursal: sucursalActual ? sucursalActual.id : ''
+          })
         });
         const respuesta = await response.json();
         if (respuesta.exito) {
