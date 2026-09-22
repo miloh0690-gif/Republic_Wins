@@ -22,3 +22,13 @@ Thumbs.db
 # ===== Logs =====
 logs/
 *.log
+# Ignorar la carpeta de librerías pesadas
+node_modules/
+
+# Ignorar archivos de variables de entorno con claves secretas
+.env
+
+# Ignorar archivos de registro de errores
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
