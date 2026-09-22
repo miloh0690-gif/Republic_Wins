@@ -1,0 +1,24 @@
+# ===== SECRETOS: nunca subir a Git =====
+.env
+.env.local
+.env.*.local
+
+# ===== Node =====
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# ===== Datos locales del modo demo =====
+data/
+
+# ===== Sistema operativo / editores =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ===== Logs =====
+logs/
+*.log
