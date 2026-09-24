@@ -5,8 +5,8 @@
  * precios). Si se cachearan, un mesero podría cobrar con precios viejos o
  * ver un resumen desactualizado. Solo se guarda el "cascarón" de la app.
  */
-const CACHE = 'rw-pos-v1';
-const ARCHIVOS = ['./', './index.html', './manifest.json'];
+const CACHE = 'rw-pos-v2';
+const ARCHIVOS = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARCHIVOS)).then(() => self.skipWaiting()));
