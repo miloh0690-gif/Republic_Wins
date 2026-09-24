@@ -620,13 +620,22 @@
           <span id="ticket-total" class="font-display text-2xl text-[#e8332a]">0.00 Bs</span>
         </div>
         <p class="text-center text-[10px] text-zinc-400 mt-4 tracking-wide">¡Gracias por su preferencia! 🔥</p>
-        <div class="mt-5 flex gap-2 no-print">
-          <button onclick="imprimirComanda()" class="flex-1 bg-[#e8332a] text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-[#c22a22] transition">
-            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comanda
-          </button>
-          <button onclick="cerrarComanda()" class="bg-zinc-200 text-zinc-800 font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-zinc-300 transition">
-            Cerrar
-          </button>
+        <div class="mt-5 no-print">
+          <div class="flex items-center justify-between mb-2">
+            <span id="estado-impresora" class="text-[11px] font-bold text-zinc-400">🖨️ Impresora no conectada</span>
+            <div class="flex gap-1">
+              <button onclick="conectarImpresoraBluetooth()" title="Conectar por Bluetooth (tablet/móvil)" class="text-[10px] font-bold px-2 py-1 rounded bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition">BT</button>
+              <button onclick="conectarImpresoraUSB()" title="Conectar por USB/COM (PC)" class="text-[10px] font-bold px-2 py-1 rounded bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition">USB</button>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="imprimirComanda()" class="flex-1 bg-[#e8332a] text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-[#c22a22] transition">
+              <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Comanda
+            </button>
+            <button onclick="cerrarComanda()" class="bg-zinc-200 text-zinc-800 font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-zinc-300 transition">
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
       <div class="receipt-edge-bottom no-print"></div>
@@ -745,6 +754,265 @@
     let categoriaActiva = 'TODOS';
     let filtroResumenActivo = 'HOY';
     
+    // ============================================================
+    // IMPRESORA TÉRMICA ESC/POS — PT210_UB (papel 58mm, 32 col)
+    // ============================================================
+    const IMPRESORA = {
+      tipo: null,            // 'bluetooth' | 'serial' | null (sin conectar => fallback window.print)
+      nombre: '',
+      btServer: null,
+      btCaracteristica: null,
+      serialPort: null,
+      serialWriter: null,
+      ANCHO: 32               // MAX DOTS 192 / fuente 12x24 => 32 caracteres por línea en 58mm
+    };
+
+    // Servicios/característica BLE típicos de impresoras térmicas portátiles tipo "serial sobre BLE"
+    // (la PT210_UB expone uno de estos perfiles; se prueban en orden hasta encontrar uno con característica "write")
+    const BT_PERFILES_IMPRESORA = [
+      { servicio: '000018f0-0000-1000-8000-00805f9b34fb', caracteristica: '00002af1-0000-1000-8000-00805f9b34fb' },
+      { servicio: '0000ffe0-0000-1000-8000-00805f9b34fb', caracteristica: '0000ffe1-0000-1000-8000-00805f9b34fb' },
+      { servicio: '49535343-fe7d-4ae5-8fa9-9fafd205e455', caracteristica: '49535343-8841-43f4-a8d4-ecbe34729bb3' }
+    ];
+
+    // Tabla de caracteres en español -> CP437 (code page nativa por defecto de casi toda impresora ESC/POS,
+    // incluida la PT210_UB; cubre tildes, Ñ/ñ, ¿ ¡ sin salir como "?"/cuadros)
+    const MAPA_CP437_ES = {
+      'á':0xA0,'é':0x82,'í':0xA1,'ó':0xA2,'ú':0xA3,
+      'Á':0xB5,'É':0x90,'Í':0xD6,'Ó':0xE0,'Ú':0xE9,
+      'ñ':0xA4,'Ñ':0xA5,'ü':0x81,'Ü':0x9A,'¿':0xA8,'¡':0xAD
+    };
+
+    function textoABytesImpresora(texto) {
+      const bytes = [];
+      for (const ch of String(texto)) {
+        const code = ch.codePointAt(0);
+        if (code < 128) bytes.push(code);
+        else if (MAPA_CP437_ES[ch] !== undefined) bytes.push(MAPA_CP437_ES[ch]);
+        else bytes.push(0x3F); // fallback '?' para símbolos no soportados (p.ej. emojis)
+      }
+      return bytes;
+    }
+
+    // Envuelve texto a N caracteres por línea sin cortar palabras a la mitad
+    function envolverTexto(texto, ancho) {
+      const palabras = String(texto).split(' ');
+      const lineas = [];
+      let actual = '';
+      for (const palabra of palabras) {
+        const candidata = actual ? actual + ' ' + palabra : palabra;
+        if (candidata.length > ancho) {
+          if (actual) lineas.push(actual);
+          actual = palabra.length > ancho ? palabra.slice(0, ancho) : palabra;
+        } else {
+          actual = candidata;
+        }
+      }
+      if (actual) lineas.push(actual);
+      return lineas.length ? lineas : [''];
+    }
+
+    // Línea de 2 columnas (texto izquierda / texto derecha) ajustada al ancho del ticket
+    function lineaDosColumnas(izq, der, ancho) {
+      izq = String(izq); der = String(der);
+      const espacio = ancho - izq.length - der.length;
+      if (espacio < 1) {
+        const izqCorto = izq.slice(0, Math.max(0, ancho - der.length - 1));
+        return izqCorto + ' '.repeat(Math.max(1, ancho - izqCorto.length - der.length)) + der;
+      }
+      return izq + ' '.repeat(espacio) + der;
+    }
+
+    // Construye el buffer completo de comandos ESC/POS para una comanda de cocina
+    function construirComandaEscPos(ticket) {
+      const ESC = 0x1B, GS = 0x1D, LF = 0x0A;
+      const A = IMPRESORA.ANCHO;
+      let out = [];
+
+      const push = (...b) => out.push(...b);
+      const texto = (s) => push(...textoABytesImpresora(s));
+      const salto = () => push(LF);
+      const centrar = () => push(ESC, 0x61, 1);
+      const izquierda = () => push(ESC, 0x61, 0);
+      const negritaOn = () => push(ESC, 0x45, 1);
+      const negritaOff = () => push(ESC, 0x45, 0);
+      const dobleAltoOn = () => push(GS, 0x21, 0x11);
+      const dobleAltoOff = () => push(GS, 0x21, 0x00);
+      const linea = (ch = '-') => { texto(ch.repeat(A)); salto(); };
+
+      push(ESC, 0x40); // Inicializar impresora
+
+      // Encabezado
+      centrar();
+      dobleAltoOn(); negritaOn();
+      texto('REPUBLIC WINGS'); salto();
+      negritaOff(); dobleAltoOff();
+      texto('*** COMANDA PARA COCINA ***'); salto();
+      izquierda();
+      linea('=');
+      texto(`ORDEN #: ${ticket.idVenta}`); salto();
+      texto(`Hora: ${ticket.hora} - ${ticket.fecha}`); salto();
+      linea('-');
+
+      // Datos del cliente
+      negritaOn(); texto('CLIENTE: '); negritaOff();
+      envolverTexto((ticket.cliente || '---').toUpperCase(), A - 9).forEach(l => { texto(l); salto(); });
+      texto(`CELULAR: ${ticket.celular || 'N/A'}`); salto();
+      negritaOn(); texto(`TIPO: ${(ticket.tipoConsumo || '---').toUpperCase()}`); negritaOff(); salto();
+
+      if (ticket.nota) {
+        linea('-');
+        negritaOn(); texto('NOTA:'); negritaOff(); salto();
+        envolverTexto(ticket.nota, A).forEach(l => { texto(l); salto(); });
+      }
+      linea('=');
+
+      // Items
+      ticket.items.forEach(item => {
+        negritaOn();
+        const etiqueta = `${item.cantidad}x ${item.nombre}`;
+        const precio = `${(item.precio * item.cantidad).toFixed(2)}Bs`;
+        envolverTexto(etiqueta, A - precio.length - 1).forEach((l, idx, arr) => {
+          if (idx === arr.length - 1) {
+            texto(lineaDosColumnas(l, precio, A));
+          } else {
+            texto(l);
+          }
+          salto();
+        });
+        negritaOff();
+        if (item.salsas && item.salsas.length > 0) {
+          item.salsas.forEach((s, idx) => {
+            envolverTexto(`  SALSA ${idx + 1}: ${s.nombre.toUpperCase()} (${s.modo.toUpperCase()})`, A).forEach(l => { texto(l); salto(); });
+          });
+        }
+        linea('-');
+      });
+
+      // Total
+      centrar();
+      negritaOn(); dobleAltoOn();
+      texto(`TOTAL: ${ticket.totalBs} Bs`); salto();
+      dobleAltoOff(); negritaOff();
+      texto('Gracias por su preferencia'); salto();
+      izquierda();
+
+      // Avance de papel para poder cortar con el borde metálico (sin cortador automático)
+      for (let i = 0; i < 5; i++) salto();
+
+      return new Uint8Array(out);
+    }
+
+    // ---- Conexión Bluetooth (tablet/móvil) ----
+    async function conectarImpresoraBluetooth() {
+      if (!navigator.bluetooth) {
+        alert('Este navegador/dispositivo no soporta Bluetooth Web. Usa Chrome en Android, o conecta por USB en PC.');
+        return;
+      }
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'PT210' }],
+          optionalServices: BT_PERFILES_IMPRESORA.map(p => p.servicio)
+        });
+        const server = await device.gatt.connect();
+        let caracteristica = null;
+        for (const perfil of BT_PERFILES_IMPRESORA) {
+          try {
+            const servicio = await server.getPrimaryService(perfil.servicio);
+            caracteristica = await servicio.getCharacteristic(perfil.caracteristica);
+            break;
+          } catch (e) { /* probar el siguiente perfil */ }
+        }
+        if (!caracteristica) throw new Error('No se encontró un canal de escritura compatible en la impresora.');
+
+        IMPRESORA.tipo = 'bluetooth';
+        IMPRESORA.nombre = device.name || 'PT210_UB';
+        IMPRESORA.btServer = server;
+        IMPRESORA.btCaracteristica = caracteristica;
+
+        device.addEventListener('gattserverdisconnected', () => {
+          IMPRESORA.tipo = null;
+          actualizarEstadoImpresora();
+        });
+
+        actualizarEstadoImpresora();
+        alert(`Impresora "${IMPRESORA.nombre}" conectada por Bluetooth.`);
+      } catch (err) {
+        if (err.name !== 'NotFoundError') alert('No se pudo conectar la impresora por Bluetooth: ' + err.message);
+      }
+    }
+
+    // ---- Conexión USB/COM (PC) ----
+    async function conectarImpresoraUSB() {
+      if (!navigator.serial) {
+        alert('Este navegador no soporta Web Serial. Usa Chrome/Edge en PC, o conecta por Bluetooth en tablet/móvil.');
+        return;
+      }
+      try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        IMPRESORA.tipo = 'serial';
+        IMPRESORA.nombre = 'Impresora USB/COM';
+        IMPRESORA.serialPort = port;
+        IMPRESORA.serialWriter = port.writable.getWriter();
+        actualizarEstadoImpresora();
+        alert('Impresora conectada por USB/COM.');
+      } catch (err) {
+        if (err.name !== 'NotFoundError') alert('No se pudo conectar la impresora por USB: ' + err.message);
+      }
+    }
+
+    function actualizarEstadoImpresora() {
+      const el = document.getElementById('estado-impresora');
+      if (!el) return;
+      if (IMPRESORA.tipo) {
+        el.textContent = `🖨️ ${IMPRESORA.nombre} conectada`;
+        el.classList.remove('text-zinc-400');
+        el.classList.add('text-emerald-600');
+      } else {
+        el.textContent = '🖨️ Impresora no conectada';
+        el.classList.add('text-zinc-400');
+        el.classList.remove('text-emerald-600');
+      }
+    }
+
+    // Envía los bytes al canal activo (fragmentando para BLE, que suele limitar cada escritura a ~180 bytes)
+    async function enviarBytesImpresora(bytes) {
+      if (IMPRESORA.tipo === 'bluetooth' && IMPRESORA.btCaracteristica) {
+        const TAMANO_CHUNK = 180;
+        for (let i = 0; i < bytes.length; i += TAMANO_CHUNK) {
+          const chunk = bytes.slice(i, i + TAMANO_CHUNK);
+          await IMPRESORA.btCaracteristica.writeValueWithoutResponse(chunk);
+        }
+        return true;
+      }
+      if (IMPRESORA.tipo === 'serial' && IMPRESORA.serialWriter) {
+        await IMPRESORA.serialWriter.write(bytes);
+        return true;
+      }
+      return false;
+    }
+
+    // Datos de la última comanda mostrada, capturados para poder imprimirlos por ESC/POS
+    let ticketActual = null;
+
+    async function imprimirComanda() {
+      if (!ticketActual) { window.print(); return; }
+      if (!IMPRESORA.tipo) {
+        // Sin impresora térmica conectada: se usa la impresión del navegador como respaldo
+        window.print();
+        return;
+      }
+      try {
+        const bytes = construirComandaEscPos(ticketActual);
+        const enviado = await enviarBytesImpresora(bytes);
+        if (!enviado) window.print();
+      } catch (err) {
+        alert('Error al imprimir en la impresora térmica: ' + err.message + '\nSe usará la impresión del navegador como respaldo.');
+        window.print();
+      }
+    }
+
     let productoTemp = null;
     let cantidadSalsasTemp = 1;
     let seleccionesSalsas = [];
@@ -1551,9 +1819,26 @@
 
       document.getElementById('modal-comanda').classList.remove('hidden');
       lucide.createIcons();
-    }
 
-    function imprimirComanda() { window.print(); }
+      // Se guardan los datos ya normalizados para poder enviarlos como ESC/POS a la impresora térmica
+      ticketActual = {
+        idVenta,
+        totalBs,
+        cliente,
+        celular,
+        tipoConsumo,
+        nota,
+        fecha: new Date().toLocaleDateString(),
+        hora: new Date().toLocaleTimeString(),
+        items: carrito.map(i => ({
+          cantidad: i.cantidad,
+          nombre: i.nombre,
+          precio: i.precio,
+          salsas: i.salsas || []
+        }))
+      };
+      actualizarEstadoImpresora();
+    }
 
     function cerrarComanda() {
       document.getElementById('modal-comanda').classList.add('hidden');
