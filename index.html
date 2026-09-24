@@ -1249,7 +1249,7 @@
         if (modoAuthActual === 'SUCURSAL') {
           if (!sucursalPendiente) return;
           const ok = await verificarClave('sucursal', pass, { id: sucursalPendiente.id });
-          if (ok) { cerrarAuthModal(); activarSucursal(sucursalPendiente); }
+          if (ok) { const s = sucursalPendiente; cerrarAuthModal(); activarSucursal(s); }
           else { document.getElementById('auth-error').classList.remove('hidden'); }
           return;
         }
