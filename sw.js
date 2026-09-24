@@ -5,7 +5,7 @@
  * precios). Si se cachearan, un mesero podría cobrar con precios viejos o
  * ver un resumen desactualizado. Solo se guarda el "cascarón" de la app.
  */
-const CACHE = 'rw-pos-v2';
+const CACHE = 'rw-pos-v3';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -23,12 +23,16 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
+  // NO interceptar recursos externos (CDNs: Tailwind, Lucide, Google Fonts,
+  // imágenes). El navegador los carga directo y la CSP se aplica normal;
+  // si el SW hiciera fetch() interno, quedarían sujetos a connect-src y fallarían.
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return; // siempre a la red
 
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        if (res.ok && url.origin === self.location.origin) {
+        if (res.ok) {
           const copia = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, copia));
         }
