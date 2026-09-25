@@ -24,6 +24,7 @@
  *   POST /api/venta           { datosVenta }     -> { exito, idVenta }
  *   POST /api/productos       { cambios: [...] } -> { exito }
  *   POST /api/stock           { id, cantidad }   -> { exito }
+ *   POST /api/stock/lote      { cambios: [...] } -> { exito, actualizados }
  *   GET  /api/health                             -> { ok, modo }
  *
  *  Cada login exitoso deja una cookie firmada (httpOnly) con la sucursal y
@@ -326,6 +327,31 @@ function invalidarCacheMenu() {
   cacheMenu.clear();
 }
 
+/**
+ * NUEVO (modo demo): réplica local de lo que Apps Script hace en producción
+ * dentro de registrarVenta -> descontarStockBebidas. Sin esto, en modo demo
+ * el stock de bebidas nunca bajaba al vender, solo con "Reponer".
+ */
+async function descontarStockBebidasLocal(detalle) {
+  if (!detalle) return;
+  const menu = await leerJsonLocal('menu.json', MENU_DEMO);
+  let huboCambios = false;
+  for (const parte of String(detalle).split(' | ')) {
+    const m = parte.match(/^(\d+)x\s+([^[]+)/);
+    if (!m) continue;
+    const cantidad = parseInt(m[1], 10);
+    const nombre = m[2].trim();
+    const prod = menu.find(p =>
+      String(p.nombre).trim() === nombre &&
+      String(p.categoria || '').trim().toUpperCase() === 'BEBIDAS'
+    );
+    if (!prod) continue;
+    prod.stock = (Number(prod.stock) || 0) - cantidad;
+    huboCambios = true;
+  }
+  if (huboCambios) await escribirJsonLocal('menu.json', menu);
+}
+
 async function obtenerVentas(sucursalId) {
   if (MODO_DEMO) {
     const todas = await leerJsonLocal('ventas.json', []);
@@ -559,6 +585,10 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
       const idVenta = `RW-${String(ventas.length + 1).padStart(4, '0')}`;
       ventas.push({ idVenta, fecha: new Date().toISOString(), ...venta });
       await escribirJsonLocal('ventas.json', ventas);
+      // El stock de bebidas también se descuenta en modo demo, para que el
+      // comportamiento sea igual al de producción (Apps Script).
+      await descontarStockBebidasLocal(detalle);
+      invalidarCacheMenu();
       return res.json({ exito: true, idVenta });
     }
 
@@ -566,6 +596,12 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
     if (!respuesta || respuesta.exito !== true) {
       return res.status(502).json({ exito: false, error: respuesta?.error || 'Apps Script rechazó la venta.' });
     }
+    // El stock de bebidas ya se descontó en la hoja (Apps Script lo hace dentro
+    // de registrarVenta -> descontarStockBebidas). Sin invalidar el caché aquí,
+    // /api/menu seguía sirviendo el stock viejo hasta por MENU_CACHE_SEGUNDOS
+    // (30s por defecto), y el Inventario parecía no sincronizarse aunque el
+    // descuento sí se hubiera guardado en la hoja.
+    invalidarCacheMenu();
     res.json({ exito: true, idVenta: respuesta.idVenta });
   } catch (err) {
     console.error('[venta]', err.message);
@@ -657,6 +693,51 @@ app.post('/api/stock', requiereRol('admin', 'dev'), async (req, res) => {
     res.json({ exito: true });
   } catch (err) {
     console.error('[stock]', err.message);
+    res.status(502).json({ exito: false, error: err.message });
+  }
+});
+
+/**
+ * NUEVO: reposición de stock EN LOTE. Pensado para cuando llega un pedido
+ * grande de bebidas y hay que sumar stock a varias sodas de una vez en lugar
+ * de repetir /api/stock producto por producto.
+ * Body: { cambios: [{ id, cantidad }, ...] }
+ */
+app.post('/api/stock/lote', requiereRol('admin', 'dev'), async (req, res) => {
+  try {
+    const entrada = Array.isArray(req.body?.cambios) ? req.body.cambios : [];
+    if (entrada.length === 0) return res.status(400).json({ exito: false, error: 'No se enviaron reposiciones.' });
+
+    const menu = await obtenerMenu(req.sesion.sucursalId);
+    const cambios = [];
+    for (const c of entrada) {
+      const id = String(c.id || '').trim();
+      const cantidad = Number(c.cantidad);
+      if (!id || !Number.isFinite(cantidad) || cantidad <= 0 || cantidad > 10000) continue;
+      const prod = menu.find(p => p.id === id);
+      if (!prod) continue;
+      cambios.push({ id, cantidad });
+    }
+    if (cambios.length === 0) return res.status(400).json({ exito: false, error: 'Ninguna reposición válida.' });
+
+    if (MODO_DEMO) {
+      const actual = await leerJsonLocal('menu.json', MENU_DEMO);
+      cambios.forEach(c => {
+        const p = actual.find(x => String(x.id) === c.id);
+        if (p) p.stock = (Number(p.stock) || 0) + c.cantidad;
+      });
+      await escribirJsonLocal('menu.json', actual);
+    } else {
+      const r = await gasPost('actualizarStockLote', { cambios, sucursal: req.sesion.sucursalId });
+      if (!r || r.exito !== true) {
+        return res.status(502).json({ exito: false, error: r?.error || 'Apps Script no aplicó la reposición.' });
+      }
+    }
+    invalidarCacheMenu();
+    console.log(`[stock-lote] ${cambios.length} bebida(s) repuestas en ${req.sesion.sucursalId}`);
+    res.json({ exito: true, actualizados: cambios.length });
+  } catch (err) {
+    console.error('[stock-lote]', err.message);
     res.status(502).json({ exito: false, error: err.message });
   }
 });
