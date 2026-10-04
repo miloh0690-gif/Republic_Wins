@@ -344,7 +344,7 @@ const cacheMenu = new Map(); // idSucursal -> { datos, expira }
 
 const IDEMPOTENCIA_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas
 const IDEMPOTENCIA_MAX = 500;
-const ventasPorClave = new Map(); // claveIdempotencia -> { idVenta, expira }
+const ventasPorClave = new Map(); // claveIdempotencia -> { idVenta, total, expira }
 
 function leerVentaPorClave(clave) {
   if (!clave) return null;
@@ -357,9 +357,9 @@ function leerVentaPorClave(clave) {
   return registro;
 }
 
-function guardarVentaPorClave(clave, idVenta) {
+function guardarVentaPorClave(clave, idVenta, total) {
   if (!clave) return;
-  ventasPorClave.set(clave, { idVenta, expira: Date.now() + IDEMPOTENCIA_TTL_MS });
+  ventasPorClave.set(clave, { idVenta, total, expira: Date.now() + IDEMPOTENCIA_TTL_MS });
   // El Map no se limpia solo: se recorta por antigüedad cuando crece demasiado.
   if (ventasPorClave.size > IDEMPOTENCIA_MAX) {
     const ahora = Date.now();
@@ -636,9 +636,16 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
     // Reintento de una orden que este proceso ya guardó: se devuelve la venta
     // original sin volver a escribir, así no se duplica ni se descuenta stock
     // dos veces. Funciona aunque Apps Script todavía no tenga la v2.
+    // Se devuelve también el total de esa venta: la comanda de cocina se
+    // imprime con el número del servidor, no con el que calculó el navegador.
     const yaRegistrada = leerVentaPorClave(claveIdempotencia);
     if (yaRegistrada) {
-      return res.json({ exito: true, idVenta: yaRegistrada.idVenta, duplicado: true });
+      return res.json({
+        exito: true,
+        idVenta: yaRegistrada.idVenta,
+        duplicado: true,
+        total: yaRegistrada.total
+      });
     }
 
     const menu = await obtenerMenu(req.sesion.sucursalId);
@@ -674,22 +681,27 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
       // comportamiento sea igual al de producción (Apps Script).
       await descontarStockBebidasLocal(detalle);
       invalidarCacheMenu();
-      guardarVentaPorClave(claveIdempotencia, idVenta);
-      return res.json({ exito: true, idVenta });
+      guardarVentaPorClave(claveIdempotencia, idVenta, Number(totalFinal.toFixed(2)));
+      return res.json({ exito: true, idVenta, total: Number(totalFinal.toFixed(2)) });
     }
 
     const respuesta = await gasPost(null, venta); // doPost sin action = registrar venta
     if (!respuesta || respuesta.exito !== true) {
       return res.status(502).json({ exito: false, error: respuesta?.error || 'Apps Script rechazó la venta.' });
     }
-    guardarVentaPorClave(claveIdempotencia, respuesta.idVenta);
+    guardarVentaPorClave(claveIdempotencia, respuesta.idVenta, Number(totalFinal.toFixed(2)));
     // El stock de bebidas ya se descontó en la hoja (Apps Script lo hace dentro
     // de registrarVenta -> descontarStockBebidas). Sin invalidar el caché aquí,
     // /api/menu seguía sirviendo el stock viejo hasta por MENU_CACHE_SEGUNDOS
     // (30s por defecto), y el Inventario parecía no sincronizarse aunque el
     // descuento sí se hubiera guardado en la hoja.
     invalidarCacheMenu();
-    res.json({ exito: true, idVenta: respuesta.idVenta, duplicado: respuesta.duplicado === true });
+    res.json({
+      exito: true,
+      idVenta: respuesta.idVenta,
+      duplicado: respuesta.duplicado === true,
+      total: Number(totalFinal.toFixed(2))
+    });
   } catch (err) {
     console.error('[venta]', err.message);
     res.status(502).json({ exito: false, error: err.message });

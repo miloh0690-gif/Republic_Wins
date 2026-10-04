@@ -1794,8 +1794,27 @@
      */
     let claveOrdenActual = null;
 
+    /**
+     * Huella de la orden a la que pertenece esa clave.
+     *
+     * Importa porque la clave se reutiliza en los reintentos, y el cajero puede
+     * cambiar el carrito entre un intento y el siguiente (quitó un producto, le
+     * cambió la nota, se equivocó de cantidad). Si la orden cambió, ya NO es un
+     * reintento: es otra venta, y mandarle la clave anterior la convertiría en
+     * "duplicada" de la previa. El resultado sería que la venta nueva nunca se
+     * guarda y la comanda muestra la anterior. Con la huella, un cambio de
+     * orden genera una clave nueva y las dos ventas se registran bien.
+     */
+    let huellaOrdenActual = null;
+
     /** Evita que un doble clic dispare dos POST a la vez. */
     let ventaEnCurso = false;
+
+    /** Huella de los datos que definan una venta. Cambia si cambia la orden. */
+    function huellaOrden(d) {
+      return [d.total, d.metodoPago, d.clienteNombre, d.clienteCelular,
+              d.detalleJson, d.tipoConsumo, d.nota].join('|');
+    }
 
     async function procesarVenta() {
       const nombreCliente = document.getElementById('cliente-nombre').value.trim();
@@ -1805,10 +1824,6 @@
 
       // Si ya hay una venta en curso, ignorar el segundo clic.
       if (ventaEnCurso) return;
-
-      // Si es el primer intento de esta orden, generar su clave.
-      // En los reintentos se reutiliza la misma.
-      if (!claveOrdenActual) claveOrdenActual = generarClaveOrden();
 
       ventaEnCurso = true;
 
@@ -1837,12 +1852,22 @@
         detalleJson: detalleTexto,
         tipoConsumo: etiquetaTipoConsumo,     // "Para Llevar" o "En el Local"
         nota: notaPedido || '',               // Nota opcional del pedido
-        // La misma clave en cada reintento: el backend usa esto para no duplicar.
-        claveIdempotencia: claveOrdenActual
         // La sucursal NO se manda: el servidor la toma de la cookie de sesión.
         // Si se enviara desde aquí, cualquiera podría registrar una venta a
         // nombre de otro local editando el JavaScript del navegador.
       };
+
+      // La clave se decide DESPUÉS de armar la orden, porque depende de si esta
+      // orden es la misma que la del intento anterior: primer intento, u orden
+      // distinta de la que quedó a medias, necesitan una clave nueva.
+      const huella = huellaOrden(datosVenta);
+      if (!claveOrdenActual || huellaOrdenActual !== huella) {
+        claveOrdenActual = generarClaveOrden();
+        huellaOrdenActual = huella;
+      }
+      // La misma clave en cada reintento de la MISMA orden: el backend usa esto
+      // para no duplicar.
+      datosVenta.claveIdempotencia = claveOrdenActual;
 
       try {
         const respuesta = await api('/venta', { method: 'POST', body: datosVenta });
@@ -1850,11 +1875,27 @@
           // La venta quedó registrada (o ya estaba registrada de un intento
           // anterior): la clave se descarta, la orden se cerró.
           claveOrdenActual = null;
+          huellaOrdenActual = null;
+
+          // La comanda se imprime con el total que guardó el servidor, no con
+          // el del navegador: el servidor recalcula desde el menú y puede
+          // diferir. Imprimir el otro haría que la cocina cobrara una cosa y la
+          // hoja registrara otra.
+          const totalGuardado = (respuesta.total !== undefined && respuesta.total !== null)
+            ? Number(respuesta.total).toFixed(2)
+            : total.toFixed(2);
 
           // La comanda se abre de inmediato. Antes esperaba a cargarVentas(),
           // que son 1-2 s de ida y vuelta a Apps Script y que el cajero no
           // necesitaba: el ticket se arma desde el carrito, no desde las ventas.
-          mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
+          mostrarComandaCocinaModal(respuesta.idVenta, totalGuardado, nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
+
+          // Si el backend dice que ya estaba, el cajero tiene que saberlo: la
+          // comanda es la de un intento anterior, y si no lo ve puede volver a
+          // agregar los productos como si nada se hubiera guardado.
+          if (respuesta.duplicado) {
+            alert('Esta venta ya estaba registrada antes (se recuperó de un reintento).\n\nLa comanda es la original: ' + respuesta.idVenta);
+          }
 
           // Refrescos en segundo plano, SIN await: no bloquean la impresión.
           // refrescarMenuData: el stock ya lo descontó Apps Script al vender.
@@ -1934,6 +1975,14 @@
         }))
       };
       actualizarEstadoImpresora();
+
+      // El carrito se vacía APENAS se confirma la venta, no cuando se cierra la
+      // comanda. Antes quedaba lleno con la venta ya cobrada, y si el cajero
+      // volvía a tocar "Completar" (o recargaba la app con la comanda abierta)
+      // generaba una clave nueva y cobraba la misma orden dos veces: el
+      // duplicado que toda la protección de idempotencia evita por otro lado.
+      // La comanda ya se copió arriba, así que vaciarlo no la afecta.
+      vaciarCarrito();
     }
 
     function cerrarComanda() {
