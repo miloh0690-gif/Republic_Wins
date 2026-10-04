@@ -21,7 +21,7 @@
  *   POST /api/auth/dueno      { password }       -> { ok }
  *   GET  /api/menu?sucursal=ID                   -> [ productos ]
  *   GET  /api/ventas?sucursal=ID                 -> [ ventas ]
- *   POST /api/venta           { datosVenta }     -> { exito, idVenta }
+ *   POST /api/venta           { datosVenta }     -> { exito, idVenta, duplicado }
  *   POST /api/productos       { cambios: [...] } -> { exito }
  *   POST /api/stock           { id, cantidad }   -> { exito }
  *   POST /api/stock/lote      { cambios: [...] } -> { exito, actualizados }
@@ -30,6 +30,14 @@
  *  Cada login exitoso deja una cookie firmada (httpOnly) con la sucursal y
  *  los roles acumulados. Las rutas de datos exigen esa cookie, así que un
  *  curl sin sesión no puede leer ventas ni escribir precios.
+ *
+ *  VENTAS DUPLICADAS
+ *  -----------------
+ *  index.html manda un 'claveIdempotencia' por orden y lo reutiliza en cada
+ *  reintento. Esta ruta lo reenvía a Apps Script y además lo recuerda en
+ *  memoria, para que un reintento nunca escriba una segunda fila ni descuente
+ *  el stock dos veces. Para que la protección sobreviva a un reinicio de Render
+ *  hay que pegar el Code.gs v2, que busca la clave en la hoja 'Ventas'.
  * ============================================================================
  */
 
@@ -86,6 +94,17 @@ if (!SESSION_SECRET || SESSION_SECRET.length < 24) {
 const SESSION_HORAS = Number(process.env.SESSION_HORAS) || 12;
 const COOKIE_NOMBRE = 'rw_session';
 const MENU_CACHE_MS = (Number(process.env.MENU_CACHE_SEGUNDOS) || 30) * 1000;
+
+/**
+ * Espera máxima de cada llamada a Apps Script, en milisegundos.
+ *
+ * Antes eran 20 s fijos. Ese timeout era la causa raíz de la venta duplicada:
+ * si Apps Script llegaba a escribir la fila pero la respuesta no volvía a
+ * tiempo, el cajero veía un error y reintentaba, guardando la venta dos veces.
+ * Con GAS_TIMEOUT_MS configurable se sube el margen sin tocar código, y en
+ * Render se puede dejar en 55 s (por debajo del límite de 60 s del plan free).
+ */
+const GAS_TIMEOUT_MS = Number(process.env.GAS_TIMEOUT_MS) || 20000;
 
 /**
  * Sucursales: se leen de .env con el patrón
@@ -227,7 +246,7 @@ async function gasGet(action, params = {}) {
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
   }
-  const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(20000) });
+  const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(GAS_TIMEOUT_MS) });
   const texto = await res.text();
   try {
     return JSON.parse(texto);
@@ -249,7 +268,7 @@ async function gasPost(action, cuerpo) {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(cuerpo),
     redirect: 'follow',
-    signal: AbortSignal.timeout(20000)
+    signal: AbortSignal.timeout(GAS_TIMEOUT_MS)
   });
   const texto = await res.text();
   try {
@@ -304,6 +323,54 @@ function normalizarVenta(v) {
 // ---------------------------------------------------------------------------
 
 const cacheMenu = new Map(); // idSucursal -> { datos, expira }
+
+// ---------------------------------------------------------------------------
+// Claves de idempotencia (una por orden, no por venta guardada).
+//
+// Qué problema resuelve: si la respuesta del POST se pierde (timeout, reinicio
+// de Render), el cajero reintenta y, sin esto, se guarda la misma venta dos
+// veces y el stock de bebidas baja dos veces.
+//
+// Hay dos niveles de protección, y por eso este archivo importa:
+//   1. Apps Script (Code.gs v2) busca la clave en la columna
+//      'claveIdempotencia' de la hoja 'Ventas' antes de escribir. Es la
+//      protección real: sobrevive a reinicios y a varias instancias de Render.
+//   2. Este registro en memoria, que evita incluso escribir la segunda fila si
+//      Apps Script todavía no tiene esa versión.
+//
+// OJO: para que el nivel 1 funcione, el 'claveIdempotencia' tiene que llegar al
+// Code.gs. Por eso la ruta POST /api/venta lo reenvía explícitamente.
+// ---------------------------------------------------------------------------
+
+const IDEMPOTENCIA_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas
+const IDEMPOTENCIA_MAX = 500;
+const ventasPorClave = new Map(); // claveIdempotencia -> { idVenta, expira }
+
+function leerVentaPorClave(clave) {
+  if (!clave) return null;
+  const registro = ventasPorClave.get(clave);
+  if (!registro) return null;
+  if (registro.expira <= Date.now()) {
+    ventasPorClave.delete(clave);
+    return null;
+  }
+  return registro;
+}
+
+function guardarVentaPorClave(clave, idVenta) {
+  if (!clave) return;
+  ventasPorClave.set(clave, { idVenta, expira: Date.now() + IDEMPOTENCIA_TTL_MS });
+  // El Map no se limpia solo: se recorta por antigüedad cuando crece demasiado.
+  if (ventasPorClave.size > IDEMPOTENCIA_MAX) {
+    const ahora = Date.now();
+    for (const [k, v] of ventasPorClave) {
+      if (v.expira <= ahora) ventasPorClave.delete(k);
+    }
+    while (ventasPorClave.size > IDEMPOTENCIA_MAX) {
+      ventasPorClave.delete(ventasPorClave.keys().next().value);
+    }
+  }
+}
 
 async function obtenerMenu(sucursalId, forzar = false) {
   const clave = sucursalId || 'GLOBAL';
@@ -558,6 +625,22 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
     if (!METODOS_PAGO.includes(metodoPago)) return res.status(400).json({ exito: false, error: 'Método de pago inválido.' });
     if (!TIPOS_CONSUMO.includes(tipoConsumo)) return res.status(400).json({ exito: false, error: 'Tipo de pedido inválido.' });
 
+    // El navegador manda una clave por orden y la reutiliza en cada reintento
+    // de esa misma orden. Se acotan los caracteres para que nada raro llegue a
+    // la hoja: solo letras, dígitos, guion y guion bajo.
+    const claveIdempotencia = String(b.claveIdempotencia || '')
+      .trim()
+      .replace(/[^A-Za-z0-9_-]/g, '')
+      .slice(0, 64);
+
+    // Reintento de una orden que este proceso ya guardó: se devuelve la venta
+    // original sin volver a escribir, así no se duplica ni se descuenta stock
+    // dos veces. Funciona aunque Apps Script todavía no tenga la v2.
+    const yaRegistrada = leerVentaPorClave(claveIdempotencia);
+    if (yaRegistrada) {
+      return res.json({ exito: true, idVenta: yaRegistrada.idVenta, duplicado: true });
+    }
+
     const menu = await obtenerMenu(req.sesion.sucursalId);
     const { total: totalServidor, completo } = recalcularTotal(detalle, menu);
     const totalCliente = Number(String(b.total || '0').replace(/[^\d.]/g, '')) || 0;
@@ -577,7 +660,9 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
       tipoConsumo,
       nota: String(b.nota || '').trim().slice(0, 500),
       sucursalId: req.sesion.sucursalId,
-      sucursalNombre: req.sesion.sucursalNombre
+      sucursalNombre: req.sesion.sucursalNombre,
+      // Sin esto, Apps Script no tiene forma de saber que es un reintento.
+      claveIdempotencia
     };
 
     if (MODO_DEMO) {
@@ -589,6 +674,7 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
       // comportamiento sea igual al de producción (Apps Script).
       await descontarStockBebidasLocal(detalle);
       invalidarCacheMenu();
+      guardarVentaPorClave(claveIdempotencia, idVenta);
       return res.json({ exito: true, idVenta });
     }
 
@@ -596,13 +682,14 @@ app.post('/api/venta', requiereRol('sucursal'), async (req, res) => {
     if (!respuesta || respuesta.exito !== true) {
       return res.status(502).json({ exito: false, error: respuesta?.error || 'Apps Script rechazó la venta.' });
     }
+    guardarVentaPorClave(claveIdempotencia, respuesta.idVenta);
     // El stock de bebidas ya se descontó en la hoja (Apps Script lo hace dentro
     // de registrarVenta -> descontarStockBebidas). Sin invalidar el caché aquí,
     // /api/menu seguía sirviendo el stock viejo hasta por MENU_CACHE_SEGUNDOS
     // (30s por defecto), y el Inventario parecía no sincronizarse aunque el
     // descuento sí se hubiera guardado en la hoja.
     invalidarCacheMenu();
-    res.json({ exito: true, idVenta: respuesta.idVenta });
+    res.json({ exito: true, idVenta: respuesta.idVenta, duplicado: respuesta.duplicado === true });
   } catch (err) {
     console.error('[venta]', err.message);
     res.status(502).json({ exito: false, error: err.message });

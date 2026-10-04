@@ -1778,11 +1778,39 @@
       }
     }
 
+    /** Devuelve un identificador único para esta orden. */
+    function generarClaveOrden() {
+      // crypto.randomUUID si existe; si no, timestamp + aleatorio.
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+      }
+      return 'ORD-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    /**
+     * Clave de la orden que se está intentando guardar.
+     * Sobrevive a los reintentos: si el POST falla, se conserva y se reenvía.
+     * Solo se descarta cuando el backend confirma que la venta quedó registrada.
+     */
+    let claveOrdenActual = null;
+
+    /** Evita que un doble clic dispare dos POST a la vez. */
+    let ventaEnCurso = false;
+
     async function procesarVenta() {
       const nombreCliente = document.getElementById('cliente-nombre').value.trim();
       const celularCliente = document.getElementById('cliente-celular').value.trim();
       const notaPedido = document.getElementById('pedido-nota').value.trim();
       if (carrito.length === 0 || !metodoPagoSeleccionado || !tipoConsumoSeleccionado || !nombreCliente) return;
+
+      // Si ya hay una venta en curso, ignorar el segundo clic.
+      if (ventaEnCurso) return;
+
+      // Si es el primer intento de esta orden, generar su clave.
+      // En los reintentos se reutiliza la misma.
+      if (!claveOrdenActual) claveOrdenActual = generarClaveOrden();
+
+      ventaEnCurso = true;
 
       const btnCompletar = document.getElementById('btn-completar');
       btnCompletar.disabled = true;
@@ -1808,7 +1836,9 @@
         clienteCelular: celularCliente || 'N/A',
         detalleJson: detalleTexto,
         tipoConsumo: etiquetaTipoConsumo,     // "Para Llevar" o "En el Local"
-        nota: notaPedido || ''                // Nota opcional del pedido
+        nota: notaPedido || '',               // Nota opcional del pedido
+        // La misma clave en cada reintento: el backend usa esto para no duplicar.
+        claveIdempotencia: claveOrdenActual
         // La sucursal NO se manda: el servidor la toma de la cookie de sesión.
         // Si se enviara desde aquí, cualquiera podría registrar una venta a
         // nombre de otro local editando el JavaScript del navegador.
@@ -1817,11 +1847,20 @@
       try {
         const respuesta = await api('/venta', { method: 'POST', body: datosVenta });
         if (respuesta && respuesta.exito) {
+          // La venta quedó registrada (o ya estaba registrada de un intento
+          // anterior): la clave se descarta, la orden se cerró.
+          claveOrdenActual = null;
+
+          // La comanda se abre de inmediato. Antes esperaba a cargarVentas(),
+          // que son 1-2 s de ida y vuelta a Apps Script y que el cajero no
+          // necesitaba: el ticket se arma desde el carrito, no desde las ventas.
           mostrarComandaCocinaModal(respuesta.idVenta, total.toFixed(2), nombreCliente, celularCliente, etiquetaTipoConsumo, notaPedido);
-          // Refresca en segundo plano el stock de bebidas ya descontado por
-          // la venta (Apps Script lo resta en el momento), para que el
-          // Inventario muestre el dato real sin esperar a que expire el
-          // caché del servidor. No se espera (await) para no retrasar el ticket.
+
+          // Refrescos en segundo plano, SIN await: no bloquean la impresión.
+          // refrescarMenuData: el stock ya lo descontó Apps Script al vender.
+          // NO se llama cargarVentas() acá a propósito: es otra ida y vuelta a
+          // Apps Script (~1-2 s) por cada venta, y el Resumen igual se actualiza
+          // al entrar a la vista, que ya la pide.
           refrescarMenuData();
         } else {
           alert('Error al guardar la venta: ' + ((respuesta && respuesta.error) || 'desconocido'));
@@ -1832,6 +1871,7 @@
           alert('No se pudo registrar la venta: ' + err.message + '\n\nLa orden sigue en pantalla, puedes reintentar.');
         }
       } finally {
+        ventaEnCurso = false;
         validarFormularioVenta();
       }
     }
